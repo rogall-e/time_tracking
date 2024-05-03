@@ -1,5 +1,5 @@
 [package]
-name = "time_tracking"
+name = "time_tracking_basic"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,5 +10,6 @@ anyhow = "1.0.82"
 chrono = "0.4.38"
 crossterm = "0.27.0"
 ratatui = "0.26.2"
-serde = "1.0.199"
+serde = { version = "*", features = ["derive"] }
+serde-jsonlines = "0.5.0"
 serde_json = "1.0.116"

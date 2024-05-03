@@ -1,12 +1,37 @@
+use crate::app::{App, CurrentScreen, CurrentlyEditing};
+use crate::calc_time::parse_time;
+use crate::read_json::read_json;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
+    widgets::{BarChart, Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
 
-use crate::app::{App, CurrentScreen, CurrentlyEditing};
+struct JsonParsed<'a> {
+    data: Vec<(&'a str, i32)>,
+}
+
+impl<'a> JsonParsed<'a> {
+    fn new() -> Self {
+        let worktime_list = read_json();
+        let mut worktime_items = vec![];
+        for worktime in worktime_list {
+            let date: &str = worktime.date.as_str();
+            let start_time = parse_time(&worktime.starttime);
+            let end_time = parse_time(&worktime.endtime);
+            let start_minutes = start_time.0 * 60 + start_time.1;
+            let end_minutes = end_time.0 * 60 + end_time.1;
+            let worktime_in_min: i32 = end_minutes - start_minutes;
+            worktime_items.push((&date, worktime_in_min));
+        }
+
+        JsonParsed {
+            data: worktime_items,
+        }
+    }
+}
 
 pub fn ui(f: &mut Frame, app: &App) {
     // Create the layout sections.
@@ -19,12 +44,17 @@ pub fn ui(f: &mut Frame, app: &App) {
         ])
         .split(f.size());
 
+    let inner_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(chunks[1]);
+
     let title_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default());
 
     let title = Paragraph::new(Text::styled(
-        "Create New Json",
+        "Time Tracker",
         Style::default().fg(Color::Green),
     ))
     .block(title_block);
@@ -33,24 +63,46 @@ pub fn ui(f: &mut Frame, app: &App) {
 
     let mut list_items = Vec::<ListItem>::new();
 
-    for key in app.pairs.keys() {
+    for key in app.starttime_pairs.keys() {
         list_items.push(ListItem::new(Line::from(Span::styled(
-            format!("{: <25} : {}", key, app.pairs.get(key).unwrap()),
+            format!("{: <25} : {}", key, app.starttime_pairs.get(key).unwrap()),
+            Style::default().fg(Color::Yellow),
+        ))));
+    }
+
+    for key in app.endtime_pairs.keys() {
+        list_items.push(ListItem::new(Line::from(Span::styled(
+            format!("{: <25} : {}", key, app.endtime_pairs.get(key).unwrap()),
             Style::default().fg(Color::Yellow),
         ))));
     }
 
     let list = List::new(list_items);
 
-    f.render_widget(list, chunks[1]);
+    f.render_widget(list, inner_chunks[0]);
+
+    let barchart = BarChart::default()
+        .block(Block::default().title("Worktime").borders(Borders::ALL))
+        .data(&JsonParsed::new().data)
+        .bar_width(5)
+        .bar_gap(1)
+        .value_style(Style::default().fg(Color::White).bg(Color::Green))
+        .label_style(Style::default().fg(Color::Yellow))
+        .style(Style::default().fg(Color::White));
+
+    f.render_widget(barchart, inner_chunks[1]);
 
     let current_navigation_text = vec![
         // The first half of the text
         match app.current_screen {
             CurrentScreen::Main => Span::styled("Normal Mode", Style::default().fg(Color::Green)),
 
-            CurrentScreen::Editing => {
-                Span::styled("Editing Mode", Style::default().fg(Color::Yellow))
+            CurrentScreen::EditingStarttime => {
+                Span::styled("Normal Mode", Style::default().fg(Color::DarkGray))
+            }
+
+            CurrentScreen::EditingEndtime => {
+                Span::styled("Normal Mode", Style::default().fg(Color::DarkGray))
             }
 
             CurrentScreen::Exiting => Span::styled("Exiting", Style::default().fg(Color::LightRed)),
@@ -62,11 +114,11 @@ pub fn ui(f: &mut Frame, app: &App) {
         {
             if let Some(editing) = &app.currently_editing {
                 match editing {
-                    CurrentlyEditing::Key => {
-                        Span::styled("Editing Json Key", Style::default().fg(Color::Green))
+                    CurrentlyEditing::Starttime => {
+                        Span::styled("Editing Starttime", Style::default().fg(Color::Green))
                     }
-                    CurrentlyEditing::Value => {
-                        Span::styled("Editing Json Value", Style::default().fg(Color::LightGreen))
+                    CurrentlyEditing::Endtime => {
+                        Span::styled("Editing Endtime", Style::default().fg(Color::Green))
                     }
                 }
             } else {
@@ -81,15 +133,19 @@ pub fn ui(f: &mut Frame, app: &App) {
     let current_keys_hint = {
         match app.current_screen {
             CurrentScreen::Main => Span::styled(
-                "(q) to quit / (e) to make new pair",
+                "(q) to quit / (s) to edit Starttime / (e) to edit Endtime",
                 Style::default().fg(Color::Red),
             ),
-            CurrentScreen::Editing => Span::styled(
-                "(ESC) to cancel/(Tab) to switch boxes/enter to complete",
+            CurrentScreen::EditingStarttime => Span::styled(
+                "(ESC) to cancel/enter to complete",
+                Style::default().fg(Color::Red),
+            ),
+            CurrentScreen::EditingEndtime => Span::styled(
+                "(ESC) to cancel/enter to complete",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Exiting => Span::styled(
-                "(q) to quit / (e) to make new pair",
+                "(q) to quit / (s) to edit Starttime / (e) to edit Endtime",
                 Style::default().fg(Color::Red),
             ),
         }
@@ -107,40 +163,27 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(key_notes_footer, footer_chunks[1]);
 
     if let Some(editing) = &app.currently_editing {
-        let popup_block = Block::default()
-            .title("Enter a new key-value pair")
-            .borders(Borders::NONE)
-            .style(Style::default().bg(Color::DarkGray));
-
         let area = centered_rect(60, 25, f.size());
 
-        f.render_widget(popup_block, area);
+        let mut key_block = Block::default().title("Starttime").borders(Borders::ALL);
 
-        let popup_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .margin(1)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(area);
-
-        let mut key_block = Block::default().title("Key").borders(Borders::ALL);
-
-        let mut value_block = Block::default().title("Value").borders(Borders::ALL);
+        let mut value_block = Block::default().title("Endtime").borders(Borders::ALL);
 
         let active_style = Style::default().bg(Color::LightYellow).fg(Color::Black);
 
         match editing {
-            CurrentlyEditing::Key => key_block = key_block.style(active_style),
+            CurrentlyEditing::Starttime => {
+                key_block = key_block.style(active_style);
+                let key_text = Paragraph::new(app.starttime_input.clone()).block(key_block);
+                f.render_widget(key_text, area);
+            }
 
-            CurrentlyEditing::Value => value_block = value_block.style(active_style),
+            CurrentlyEditing::Endtime => {
+                value_block = value_block.style(active_style);
+                let value_text = Paragraph::new(app.endtime_input.clone()).block(value_block);
+                f.render_widget(value_text, area);
+            }
         };
-
-        let key_text = Paragraph::new(app.key_input.clone()).block(key_block);
-
-        f.render_widget(key_text, popup_chunks[0]);
-
-        let value_text = Paragraph::new(app.value_input.clone()).block(value_block);
-
-        f.render_widget(value_text, popup_chunks[1]);
     }
 
     if let CurrentScreen::Exiting = app.current_screen {
@@ -151,7 +194,7 @@ pub fn ui(f: &mut Frame, app: &App) {
             .style(Style::default().bg(Color::DarkGray));
 
         let exit_text = Text::styled(
-            "Would you like to output the buffer as json? (y/n)",
+            "Would you like to output the buffer and save the worktime as json? (y/n)",
             Style::default().fg(Color::Red),
         );
 
