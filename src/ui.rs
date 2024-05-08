@@ -3,33 +3,55 @@ use crate::calc_time::parse_time;
 use crate::read_json::read_json;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Style, Modifier},
     text::{Line, Span, Text},
     widgets::{BarChart, Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
+use chrono::{Local, NaiveDate};
 
-struct JsonParsed<'a> {
-    data: Vec<(&'a str, i32)>,
+
+struct JsonParsed {
+    data: Vec<(String, i32)>, // Owned data
 }
 
-impl<'a> JsonParsed<'a> {
+impl JsonParsed {
     fn new() -> Self {
-        let worktime_list = read_json();
-        let mut worktime_items = vec![];
-        for worktime in worktime_list {
-            let date: &str = worktime.date.as_str();
-            let start_time = parse_time(&worktime.starttime);
-            let end_time = parse_time(&worktime.endtime);
-            let start_minutes = start_time.0 * 60 + start_time.1;
-            let end_minutes = end_time.0 * 60 + end_time.1;
-            let worktime_in_min: i32 = end_minutes - start_minutes;
-            worktime_items.push((&date, worktime_in_min));
-        }
+        match read_json() {
+            Ok(worktime_list) => {
+                let mut worktime_items = Vec::<(String, i32)>::new(); // Changed the type to own String
+                for worktime in worktime_list {
+                    let date_str = worktime.date;
+                    let start_time = parse_time(&worktime.starttime);
+                    let end_time = parse_time(&worktime.endtime);
+                    let start_minutes = start_time.0 * 60 + start_time.1;
+                    let end_minutes = end_time.0 * 60 + end_time.1;
+                    let worktime_in_min: i32 = end_minutes - start_minutes;
+                    worktime_items.push((date_str, worktime_in_min));
+                }
 
-        JsonParsed {
-            data: worktime_items,
+                JsonParsed {
+                    data: worktime_items,
+                }
+            }
+            Err(_) => JsonParsed {
+                data: Vec::<(String, i32)>::new(),
+            },
         }
+    }
+
+    fn data_for_last_seven_days(&self) -> Vec<(&str, u64)> {
+        self.data
+            .iter()
+            .filter(|(date, _)| {
+                let today: String = Local::now().format("%Y-%m-%d").to_string();
+                let today_date = NaiveDate::parse_from_str(&today, "%Y-%m-%d").unwrap();
+                let worktime_date = NaiveDate::parse_from_str(date, "%Y-%m-%d").unwrap();
+                let days_difference = today_date.signed_duration_since(worktime_date).num_days();
+                days_difference >= 0 && days_difference <= 7
+            })
+            .map(|(date, worktime_in_min)| (date.as_str(), *worktime_in_min as u64))
+            .collect()
     }
 }
 
@@ -48,6 +70,11 @@ pub fn ui(f: &mut Frame, app: &App) {
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(chunks[1]);
+
+    let left_inner_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(inner_chunks[0]);
 
     let title_block = Block::default()
         .borders(Borders::ALL)
@@ -77,20 +104,41 @@ pub fn ui(f: &mut Frame, app: &App) {
         ))));
     }
 
-    let list = List::new(list_items);
+    let list = List::new(list_items).block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default().fg(Color::White)),
+    );
 
-    f.render_widget(list, inner_chunks[0]);
+    f.render_widget(list, left_inner_chunks[1]);
+
+    let json_data = JsonParsed::new();
+
+    let data: Vec<(&str, u64)> = json_data.data_for_last_seven_days();
 
     let barchart = BarChart::default()
-        .block(Block::default().title("Worktime").borders(Borders::ALL))
-        .data(&JsonParsed::new().data)
-        .bar_width(5)
+        .data(&data)
+        .block(Block::default().title("Worktime in Minutes").borders(Borders::ALL))
+        .bar_width(10)
         .bar_gap(1)
         .value_style(Style::default().fg(Color::White).bg(Color::Green))
-        .label_style(Style::default().fg(Color::Yellow))
+        .label_style(Style::default().fg(Color::Yellow)
+            .add_modifier(Modifier::ITALIC))
         .style(Style::default().fg(Color::White));
 
     f.render_widget(barchart, inner_chunks[1]);
+
+
+
+    let mut current_time = Local::now().format("%H:%M").to_string();
+    let mut hour: i32 = current_time.split(":").next().unwrap().parse::<i32>().unwrap();
+    let mut minute: i32 = current_time.split(":").last().unwrap().parse::<i32>().unwrap();
+
+    let mut time_block = Block::default()
+        .borders(Borders::ALL)
+        .style(Style::default());
+
+    
 
     let current_navigation_text = vec![
         // The first half of the text
@@ -163,7 +211,29 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(key_notes_footer, footer_chunks[1]);
 
     if let Some(editing) = &app.currently_editing {
-        let area = centered_rect(60, 25, f.size());
+
+        let percent_x = 60;
+        let percent_y = 30;
+
+        let popup_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Percentage((100 - percent_y) / 2),
+                Constraint::Percentage(percent_y),
+                Constraint::Percentage((100 - percent_y) / 2),
+            ])
+            .split(left_inner_chunks[1]);
+    
+        let area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+            ])
+            .split(popup_layout[1])[1];
+
+        //let area = centered_rect(30, 15, f.size());
 
         let mut key_block = Block::default().title("Starttime").borders(Borders::ALL);
 
@@ -189,13 +259,13 @@ pub fn ui(f: &mut Frame, app: &App) {
     if let CurrentScreen::Exiting = app.current_screen {
         f.render_widget(Clear, f.size()); //this clears the entire screen and anything already drawn
         let popup_block = Block::default()
-            .title("Y/N")
+            .title("Exit Confirmation")
             .borders(Borders::NONE)
-            .style(Style::default().bg(Color::DarkGray));
+            .style(Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD));
 
         let exit_text = Text::styled(
             "Would you like to output the buffer and save the worktime as json? (y/n)",
-            Style::default().fg(Color::Red),
+            Style::default().fg(Color::Red).add_modifier(Modifier::ITALIC),
         );
 
         // the `trim: false` will stop the text from being cut off when over the edge of the block

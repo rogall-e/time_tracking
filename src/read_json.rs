@@ -10,13 +10,13 @@ pub struct Worktime {
     pub endtime: String,
 }
 
-pub fn read_json() -> Vec<Worktime> {
-    let file = File::open("worktime.json");
-    let reader = BufReader::new(file.unwrap());
+pub fn read_json() -> Result<Vec<Worktime>> {
+    let file = File::open("worktime.jsonl")?;
+    let reader = BufReader::new(file);
     let json_reader = JsonLinesReader::new(reader);
     let worktime_days = json_reader
         .read_all::<Worktime>()
         .collect::<Result<Vec<_>>>()
         .unwrap();
-    worktime_days
+    Ok(worktime_days)
 }

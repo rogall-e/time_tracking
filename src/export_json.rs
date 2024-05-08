@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
-use serde_jsonlines::{json_lines, write_json_lines};
-use std::fs::File;
-use std::io::{BufWriter, Result, Write};
+use std::fs::{OpenOptions};
+use std::io::{Write, Result};
 
 #[derive(Serialize, Deserialize)]
 pub struct Worktime {
@@ -19,11 +18,35 @@ impl Worktime {
         }
     }
 
+    fn to_jsonl(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
     pub fn export_json(&mut self) -> Result<()> {
-        let file = File::create("worktime.json")?;
-        let mut writer = BufWriter::new(file);
-        serde_json::to_writer(&mut writer, &self)?;
-        writer.flush()?;
+        let filename = "worktime.jsonl";
+        if std::path::Path::new(filename).exists() {
+            append_worktime_to_jsonl(self, filename)?;
+        } else {
+            create_and_write_jsonl(self, filename)?;
+        }
         Ok(())
     }
+}
+
+fn append_worktime_to_jsonl(worktime: &Worktime, filename: &str) -> Result<()> {
+    let file = OpenOptions::new()
+        .append(true)
+        .write(true)
+        .open(filename)?;
+    writeln!(&file, "\n{}", worktime.to_jsonl())?;
+    Ok(())
+}
+
+fn create_and_write_jsonl(worktime: &Worktime, filename: &str) -> Result<()> {
+    let file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(filename)?;
+    writeln!(&file, "{}", worktime.to_jsonl())?;
+    Ok(())
 }
