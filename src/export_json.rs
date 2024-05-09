@@ -38,7 +38,7 @@ fn append_worktime_to_jsonl(worktime: &Worktime, filename: &str) -> Result<()> {
         .append(true)
         .write(true)
         .open(filename)?;
-    writeln!(&file, "\n{}", worktime.to_jsonl())?;
+    writeln!(&file, "{}", worktime.to_jsonl())?;
     Ok(())
 }
 

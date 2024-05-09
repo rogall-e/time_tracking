@@ -1,134 +1,134 @@
-pub fn transform_digit_to_ascii(digit: i32) -> String{
-    match digit {
-        0 =>   "┌────────┐\n\
-                │        │\n\
-                │ ┌────┐ │\n\
-                │ │    │ │\n\
-                │ │    │ │\n\
-                │ │    │ │\n\
-                │ │    │ │\n\
-                │ │    │ │\n\
-                │ └────┘ │\n\
-                │        │\n\
-                └────────┘".to_string(),
-        1 =>   "   ┌──┐   \n\
-                   │  │   \n\
-                   │  │   \n\
-                   │  │   \n\
-                   │  │   \n\
-                   │  │   \n\
-                   │  │   \n\
-                   │  │   \n\
-                   │  │   \n\
-                   │  │   \n\
-                   └──┘    ".to_string(),
-        2 =>   "┌────────┐\n\
-                │        │\n\
-                └────┐   │\n\
-                     │   │\n\
-                ┌────┘   │\n\
-                │        │\n\
-                │   ┌────┘\n\
-                │   │     \n\
-                │   └────┐\n\
-                │        │\n\
-                └────────┘".to_string(),
-        3 =>   "┌────────┐\n\
-                │        │\n\
-                └────┐   │\n\
-                     │   │\n\
-                ┌────┘   │\n\
-                │        │\n\
-                └────┐   │\n\
-                     │   │\n\
-                ┌────┘   │\n\
-                │        │\n\
-                └────────┘".to_string(),
-        4 =>   "┌──┐     \n\
-                │  │     \n\
-                │  │     \n\
-                │  │     \n\
-                │  │  ┌──┐\n\
-                │  │  │  │\n\
-                │  └──┘  │\n\
-                │        │\n\
-                └─────┐  │\n\
-                      │  │\n\
-                      └──┘".to_string(),
-        5 =>   "┌────────┐\n\
-                │        │\n\
-                │   ┌────┘\n\
-                │   │    \n\
-                │   └────┐\n\
-                │        │\n\
-                └────┐   │\n\
-                     │   │\n\
-                ┌────┘   │\n\
-                │        │\n\
-                └────────┘".to_string(),
-        6 =>   "┌────────┐\n\
-                │        │\n\
-                │   ┌────┘\n\
-                │   │     \n\
-                │   └────┐\n\
-                │        │\n\
-                │ ┌────┐ │\n\
-                │ │    │ │\n\
-                │ └────┘ │\n\
-                │        │\n\
-                └────────┘".to_string(),
-        7 =>   "┌────────┐\n\
-                │        │\n\
-                └────┐   │\n\
-                     │   │\n\
-                     │   │\n\
-                     │   │\n\
-                     │   │\n\
-                     │   │\n\
-                     │   │\n\
-                     │   │\n\
-                     └───┘".to_string(),
-        8 =>   "┌────────┐\n\
-                │        │\n\
-                │        │\n\
-                │ ┌────┐ │\n\
-                │ │    │ │\n\
-                │ └────┘ │\n\
-                │        │\n\
-                │ ┌────┐ │\n\
-                │ │    │ │\n\
-                │ └────┘ │\n\
-                │        │\n\
-                └────────┘".to_string(),
-        9 =>   "┌────────┐\n\
-                │        │\n\
-                │ ┌────┐ │\n\
-                │ │    │ │\n\
-                │ │    │ │\n\
-                │ └────┘ │\n\
-                │        │\n\
-                └────┐   │\n\
-                     │   │\n\
-                ┌────┘   │\n\
-                │        │\n\
-                └────────┘".to_string(),
-        _ =>   "".to_string(),
+use ratatui::text::Line;
+
+pub fn transform_digit_to_ascii(digit: i32) -> Vec<ratatui::text::Line<'static>> {
+    match digit { 
+        0 =>   vec![Line::from("┌────────┐"),
+                    Line::from("│        │"),
+                    Line::from("│ ┌────┐ │"),
+                    Line::from("│ │    │ │"),
+                    Line::from("│ │    │ │"),
+                    Line::from("│ │    │ │"),
+                    Line::from("│ │    │ │"),
+                    Line::from("│ │    │ │"),
+                    Line::from("│ └────┘ │"),
+                    Line::from("│        │"),
+                    Line::from("└────────┘")],
+        1 =>   vec![Line::from("   ┌──┐   "),
+                    Line::from("   │  │   "),
+                    Line::from("   │  │   "),
+                    Line::from("   │  │   "),
+                    Line::from("   │  │   "),
+                    Line::from("   │  │   "),
+                    Line::from("   │  │   "),
+                    Line::from("   │  │   "),
+                    Line::from("   │  │   "),
+                    Line::from("   │  │   "),
+                    Line::from("   └──┘   ")],
+        2 =>   vec![Line::from("┌────────┐"),
+                    Line::from("│        │"),
+                    Line::from("└────┐   │"),
+                    Line::from("     │   │"),
+                    Line::from("┌────┘   │"),
+                    Line::from("│        │"),
+                    Line::from("│   ┌────┘"),
+                    Line::from("│   │     "),
+                    Line::from("│   └────┐"),
+                    Line::from("│        │"),
+                    Line::from("└────────┘")],
+        3 =>   vec![Line::from("┌────────┐"),
+                    Line::from("│        │"),
+                    Line::from("└────┐   │"),
+                    Line::from("     │   │"),
+                    Line::from("┌────┘   │"),
+                    Line::from("│        │"),
+                    Line::from("└────┐   │"),
+                    Line::from("     │   │"),
+                    Line::from("┌────┘   │"),
+                    Line::from("│        │"),
+                    Line::from("└────────┘")],
+        4 =>   vec![Line::from("┌──┐      "),
+                    Line::from("│  │      "),
+                    Line::from("│  │      "),
+                    Line::from("│  │      "),
+                    Line::from("│  │  ┌──┐"),
+                    Line::from("│  │  │  │"),
+                    Line::from("│  └──┘  │"),
+                    Line::from("│        │"),
+                    Line::from("└─────┐  │"),
+                    Line::from("      │  │"),
+                    Line::from("      └──┘")],
+        5 =>   vec![Line::from("┌────────┐"),
+                    Line::from("│        │"),
+                    Line::from("│   ┌────┘"),
+                    Line::from("│   │     "),
+                    Line::from("│   └────┐"),
+                    Line::from("│        │"),
+                    Line::from("└────┐   │"),
+                    Line::from("     │   │"),
+                    Line::from("┌────┘   │"),
+                    Line::from("│        │"),
+                    Line::from("└────────┘")],
+        6 =>   vec![Line::from("┌────────┐"),
+                    Line::from("│        │"),
+                    Line::from("│   ┌────┘"),
+                    Line::from("│   │     "),
+                    Line::from("│   └────┐"),
+                    Line::from("│        │"),
+                    Line::from("│ ┌────┐ │"),
+                    Line::from("│ │    │ │"),
+                    Line::from("│ └────┘ │"),
+                    Line::from("│        │"),
+                    Line::from("└────────┘")],
+        7 =>   vec![Line::from("┌────────┐"),
+                    Line::from("│        │"),
+                    Line::from("└────┐   │"),
+                    Line::from("     │   │"),
+                    Line::from("     │   │"),
+                    Line::from("     │   │"),
+                    Line::from("     │   │"),
+                    Line::from("     │   │"),
+                    Line::from("     │   │"),
+                    Line::from("     │   │"),
+                    Line::from("     └───┘")],
+        8 =>   vec![Line::from("┌────────┐"),
+                    Line::from("│        │"),
+                    Line::from("│ ┌────┐ │"),
+                    Line::from("│ │    │ │"),
+                    Line::from("│ └────┘ │"),
+                    Line::from("│        │"),
+                    Line::from("│ ┌────┐ │"),
+                    Line::from("│ │    │ │"),
+                    Line::from("│ └────┘ │"),
+                    Line::from("│        │"),
+                    Line::from("└────────┘")],
+        9 =>   vec![Line::from("┌────────┐"),
+                    Line::from("│        │"),
+                    Line::from("│ ┌────┐ │"),
+                    Line::from("│ │    │ │"),
+                    Line::from("│ └────┘ │"),
+                    Line::from("│        │"),
+                    Line::from("└────┐   │"),
+                    Line::from("     │   │"),
+                    Line::from("┌────┘   │"),
+                    Line::from("│        │"),
+                    Line::from("└────────┘")],
+        _ =>   vec![Line::from("")],
         
     }
 }
 
-pub fn draw_colon() -> String {
-    "          \n\
-               \n\
-               \n\
-       ┌────┐  \n\
-       │    │  \n\
-       └────┘  \n\
-               \n\
-       ┌────┐  \n\
-       │    │  \n\
-       └────┘  \n\
-               \n\
-               ".to_string(),
+pub fn draw_colon() -> Vec<ratatui::text::Line<'static>> {
+        vec![Line::from("        "),
+             Line::from("        "),
+             Line::from("        "),
+             Line::from(" ┌────┐ "),
+             Line::from(" │    │ "),
+             Line::from(" └────┘ "),
+             Line::from("        "),
+             Line::from(" ┌────┐ "),
+             Line::from(" │    │ "),
+             Line::from(" └────┘ "),
+             Line::from("        "),
+             Line::from("        ")]
 }
 

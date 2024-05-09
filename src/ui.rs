@@ -1,6 +1,7 @@
 use crate::app::{App, CurrentScreen, CurrentlyEditing};
 use crate::calc_time::parse_time;
 use crate::read_json::read_json;
+use crate::transform_digit_to_ascii::{draw_colon, transform_digit_to_ascii};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style, Modifier},
@@ -76,6 +77,19 @@ pub fn ui(f: &mut Frame, app: &App) {
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(inner_chunks[0]);
 
+    let left_inner_upper_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(3),  
+            Constraint::Percentage(20),
+            Constraint::Percentage(20),
+            Constraint::Percentage(15),
+            Constraint::Percentage(20),
+            Constraint::Percentage(20),
+            Constraint::Percentage(2)
+            ])
+        .split(left_inner_chunks[0]);
+
     let title_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default());
@@ -128,15 +142,27 @@ pub fn ui(f: &mut Frame, app: &App) {
 
     f.render_widget(barchart, inner_chunks[1]);
 
+    let current_time = Local::now().format("%H:%M").to_string();
+    let hour: &str = current_time.split(":").next().unwrap();
+    let hour_1: i32 = hour.chars().next().unwrap() as i32 - 0x30;
+    let hour_2: i32 = hour.chars().last().unwrap() as i32 - 0x30;
+    let minute: &str = current_time.split(":").last().unwrap();
+    let minute_1: i32 = minute.chars().next().unwrap() as i32 - 0x30;
+    let minute_2: i32 = minute.chars().last().unwrap() as i32 - 0x30;
 
 
-    let mut current_time = Local::now().format("%H:%M").to_string();
-    let mut hour: i32 = current_time.split(":").next().unwrap().parse::<i32>().unwrap();
-    let mut minute: i32 = current_time.split(":").last().unwrap().parse::<i32>().unwrap();
+    let paragraph_1 = Paragraph::new(Text::from(transform_digit_to_ascii(hour_1)));
+    let paragraph_2 = Paragraph::new(Text::from(transform_digit_to_ascii(hour_2)));
+    let paragraph_3 = Paragraph::new(Text::from(draw_colon()));
+    let paragraph_4 = Paragraph::new(Text::from(transform_digit_to_ascii(minute_1)));
+    let paragraph_5 = Paragraph::new(Text::from(transform_digit_to_ascii(minute_2)));
 
-    let mut time_block = Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default());
+
+    f.render_widget(paragraph_1, left_inner_upper_chunks[1]);
+    f.render_widget(paragraph_2, left_inner_upper_chunks[2]);
+    f.render_widget(paragraph_3, left_inner_upper_chunks[3]);
+    f.render_widget(paragraph_4, left_inner_upper_chunks[4]);
+    f.render_widget(paragraph_5, left_inner_upper_chunks[5]);
 
     
 
