@@ -56,14 +56,14 @@ jobs:
         shell: bash
         run: |
           # Replace with the name of your binary
-          binary_name="time_tracking"
+          binary_name="time_tracking_basic"
 
-          dirname="time_tracking-${{ env.VERSION }}-${{ matrix.target }}"
+          dirname="time_tracking_basic-${{ env.VERSION }}-${{ matrix.target }}"
           mkdir "$dirname"
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv "target/${{ matrix.target }}/release/time_tracking.exe" "$dirname"
+            mv "target/${{ matrix.target }}/release/time_tracking_basic.exe" "$dirname"
           else
-            mv "target/${{ matrix.target }}/release/time_tracking" "$dirname"
+            mv "target/${{ matrix.target }}/release/time_tracking_basic" "$dirname"
           fi
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
