@@ -62,10 +62,9 @@ jobs:
           mkdir "$dirname"
           if [ "${{ matrix.target }}" = "x86_64-pc-windows-gnu" ]; then
             echo "x86_64-pc-windows-gnu"
-            ls target/x86_64-pc-windows-gnu
-            echo "release"
-            ls target/release
-            mv "target/${{ matrix.target }}/debug/time_tracking_basic.exe" "$dirname"
+            ls target/x86_64-pc-windows-gnu/release
+          
+            mv "target/${{ matrix.target }}/release/time_tracking_basic.exe" "$dirname"
           else
             mv "target/${{ matrix.target }}/release/time_tracking_basic" "$dirname"
           fi
