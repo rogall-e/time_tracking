@@ -63,7 +63,7 @@ jobs:
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             mv "target/${{ matrix.target }}/debug/time_tracking_basic.exe" "$dirname"
           else
-            mv "target/${{ matrix.target }}/debug/time_tracking_basic" "$dirname"
+            mv "target/${{ matrix.target }}/release/time_tracking_basic" "$dirname"
           fi
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
