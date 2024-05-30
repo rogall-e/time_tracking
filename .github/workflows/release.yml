@@ -60,13 +60,13 @@ jobs:
 
           dirname="time_tracking_basic-${{ env.VERSION }}-${{ matrix.target }}"
           mkdir "$dirname"
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          if [ "${{ matrix.target }}" = "windows-latest" ]; then
             mv "target/${{ matrix.target }}/debug/time_tracking_basic.exe" "$dirname"
           else
             mv "target/${{ matrix.target }}/release/time_tracking_basic" "$dirname"
           fi
 
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          if [ "${{ matrix.os }}" = "x86_64-pc-windows-gnu" ]; then
             7z a "$dirname.zip" "$dirname"
             echo "ASSET=$dirname.zip" >> $GITHUB_ENV
           else
