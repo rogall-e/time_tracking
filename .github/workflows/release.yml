@@ -61,9 +61,9 @@ jobs:
           dirname="time_tracking_basic-${{ env.VERSION }}-${{ matrix.target }}"
           mkdir "$dirname"
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv "target/${{ matrix.target }}/release/time_tracking_basic.exe" "$dirname"
+            mv "target/${{ matrix.target }}/debug/time_tracking_basic.exe" "$dirname"
           else
-            mv "target/${{ matrix.target }}/release/time_tracking_basic" "$dirname"
+            mv "target/${{ matrix.target }}/debug/time_tracking_basic" "$dirname"
           fi
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
