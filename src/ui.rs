@@ -1,16 +1,15 @@
 use crate::app::{App, CurrentScreen, CurrentlyEditing};
 use crate::calc_time::parse_time;
 use crate::read_json::read_json;
-use crate::transform_digit_to_ascii::{draw_colon, transform_digit_to_ascii};
+use chrono::{Local, NaiveDate};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style, Modifier},
+    style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{BarChart, Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
-use chrono::{Local, NaiveDate};
-
+use tui_big_text::{BigTextBuilder, PixelSize};
 
 struct JsonParsed {
     data: Vec<(String, i32)>, // Owned data
@@ -77,35 +76,16 @@ pub fn ui(f: &mut Frame, app: &App) {
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(inner_chunks[0]);
 
-    let left_inner_upper_chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(3),  
-            Constraint::Percentage(20),
-            Constraint::Percentage(20),
-            Constraint::Percentage(15),
-            Constraint::Percentage(20),
-            Constraint::Percentage(20),
-            Constraint::Percentage(2)
-            ])
-        .split(left_inner_chunks[0]);
-
     let left_inner_lower_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage(20),  
-            Constraint::Percentage(80),
-            ])
+        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)])
         .split(left_inner_chunks[1]);
 
     let start_endtime_chunck = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(50),
-            Constraint::Percentage(50),
-        ])
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(left_inner_lower_chunks[0]);
-    
+
     // Title
     let title_block = Block::default()
         .borders(Borders::ALL)
@@ -127,7 +107,7 @@ pub fn ui(f: &mut Frame, app: &App) {
         starttime_list_items.push(ListItem::new(Line::from(Span::styled(
             format!("{: <25} : {}", key, app.starttime_pairs.get(key).unwrap()),
             Style::default().fg(Color::Yellow),
-       ))));
+        ))));
     }
 
     for key in app.endtime_pairs.keys() {
@@ -173,9 +153,7 @@ pub fn ui(f: &mut Frame, app: &App) {
         meeting_list_items.push(ListItem::new(Line::from(Span::styled(
             format!(
                 "{: <25} : {} - Ongoing Meeting ({} min)",
-                app.meeting_name,
-                app.meeting_start_time,
-                app.time_in_meetings
+                app.meeting_name, app.meeting_start_time, app.time_in_meetings
             ),
             Style::default().fg(Color::Yellow),
         ))));
@@ -197,46 +175,43 @@ pub fn ui(f: &mut Frame, app: &App) {
 
     let barchart = BarChart::default()
         .data(&data)
-        .block(Block::default().title("Worktime in Minutes").borders(Borders::ALL))
+        .block(
+            Block::default()
+                .title("Worktime in Minutes")
+                .borders(Borders::ALL),
+        )
         .bar_width(10)
         .bar_gap(1)
         .value_style(Style::default().fg(Color::White).bg(Color::Green))
-        .label_style(Style::default().fg(Color::Yellow)
-            .add_modifier(Modifier::ITALIC))
+        .label_style(
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::ITALIC),
+        )
         .style(Style::default().fg(Color::White));
 
     f.render_widget(barchart, inner_chunks[1]);
 
     // Clock
     let current_time = Local::now().format("%H:%M").to_string();
-    let hour: &str = current_time.split(":").next().unwrap();
-    let hour_1: i32 = hour.chars().next().unwrap() as i32 - 0x30;
-    let hour_2: i32 = hour.chars().last().unwrap() as i32 - 0x30;
-    let minute: &str = current_time.split(":").last().unwrap();
-    let minute_1: i32 = minute.chars().next().unwrap() as i32 - 0x30;
-    let minute_2: i32 = minute.chars().last().unwrap() as i32 - 0x30;
 
     if f.size().width > 100 && f.size().height > 30 {
-        let paragraph_1 = Paragraph::new(Text::from(transform_digit_to_ascii(hour_1)));
-        let paragraph_2 = Paragraph::new(Text::from(transform_digit_to_ascii(hour_2)));
-        let paragraph_3 = Paragraph::new(Text::from(draw_colon()));
-        let paragraph_4 = Paragraph::new(Text::from(transform_digit_to_ascii(minute_1)));
-        let paragraph_5 = Paragraph::new(Text::from(transform_digit_to_ascii(minute_2)));
-
-
-        f.render_widget(paragraph_1, left_inner_upper_chunks[1]);
-        f.render_widget(paragraph_2, left_inner_upper_chunks[2]);
-        f.render_widget(paragraph_3, left_inner_upper_chunks[3]);
-        f.render_widget(paragraph_4, left_inner_upper_chunks[4]);
-        f.render_widget(paragraph_5, left_inner_upper_chunks[5]);
+        let big_text = BigTextBuilder::default()
+            .pixel_size(PixelSize::Full)
+            .style(Style::new().fg(Color::Green))
+            .lines(vec![current_time.into()])
+            .build()
+            .unwrap();
+        f.render_widget(big_text, left_inner_chunks[0]);
     } else {
-        let clock = Paragraph::new(Text::styled(
-            format!("Current Time: {}", current_time),
-            Style::default().fg(Color::Green).add_modifier(Modifier::BOLD),
-        ))
-        .block(Block::default().borders(Borders::ALL));
+        let small_text = BigTextBuilder::default()
+            .pixel_size(PixelSize::Quadrant)
+            .style(Style::new().fg(Color::Green))
+            .lines(vec![current_time.into()])
+            .build()
+            .unwrap();
 
-        f.render_widget(clock, left_inner_upper_chunks[1]);
+        f.render_widget(small_text, left_inner_chunks[0]);
     }
 
     // Navigation text
@@ -288,7 +263,7 @@ pub fn ui(f: &mut Frame, app: &App) {
     let current_keys_hint = {
         match app.current_screen {
             CurrentScreen::Main => Span::styled(
-                "Press (q) to quit | (s) to edit Starttime | (e) to edit Endtime | (m) start/stop Meeting",
+                "Press (q) to quit | (s) to edit Starttime | (e) to edit Endtime | (m) start Meeting | (M) stop Meeting",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::EditingStarttime => Span::styled(
@@ -323,7 +298,6 @@ pub fn ui(f: &mut Frame, app: &App) {
 
     // Editing mode
     if let Some(editing) = &app.currently_editing {
-        
         // Layout for the editing mode
         let percent_x = 60;
         let percent_y = 30;
@@ -336,16 +310,15 @@ pub fn ui(f: &mut Frame, app: &App) {
                 Constraint::Percentage((100 - percent_y) / 2),
             ])
             .split(left_inner_chunks[1]);
-    
+
         let area = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Percentage((100 - percent_x) / 2),
                 Constraint::Percentage(percent_x),
-            Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Percentage((100 - percent_x) / 2),
             ])
             .split(popup_layout[1])[1];
-
 
         let mut key_block = Block::default().title("Starttime").borders(Borders::ALL);
 
@@ -370,8 +343,9 @@ pub fn ui(f: &mut Frame, app: &App) {
 
             CurrentlyEditing::MeetingName => {
                 meeting_block = meeting_block.style(active_style);
-                let value_text = Paragraph::new(app.meeting_name_input.clone()).block(meeting_block);
-                f.render_widget(value_text, area); 
+                let value_text =
+                    Paragraph::new(app.meeting_name_input.clone()).block(meeting_block);
+                f.render_widget(value_text, area);
             }
         };
     }
@@ -382,11 +356,17 @@ pub fn ui(f: &mut Frame, app: &App) {
         let popup_block = Block::default()
             .title("Exit Confirmation")
             .borders(Borders::NONE)
-            .style(Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD));
+            .style(
+                Style::default()
+                    .bg(Color::DarkGray)
+                    .add_modifier(Modifier::BOLD),
+            );
 
         let exit_text = Text::styled(
             "Would you like to output the buffer and save the worktime as json? (y/n)",
-            Style::default().fg(Color::Red).add_modifier(Modifier::ITALIC),
+            Style::default()
+                .fg(Color::Red)
+                .add_modifier(Modifier::ITALIC),
         );
 
         // the `trim: false` will stop the text from being cut off when over the edge of the block

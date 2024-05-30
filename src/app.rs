@@ -1,4 +1,4 @@
-use crate::export_json::Worktime;
+use crate::export_json::{MeetingList, Worktime};
 use anyhow::Result;
 use chrono::Local;
 use std::collections::HashMap;
@@ -14,14 +14,7 @@ pub enum CurrentScreen {
 pub enum CurrentlyEditing {
     Starttime,
     Endtime,
-    MeetingName
-}
-
-pub struct MeetingList {
-    pub meeting_name: String,
-    pub meeting_start_time: String,
-    pub meeting_end_time: String,
-    pub time_in_meeting: i32,
+    MeetingName,
 }
 
 pub struct App {
@@ -128,6 +121,7 @@ impl App {
                 .unwrap()
                 .clone(),
             self.endtime_pairs.get(&self.endtime_key).unwrap().clone(),
+            self.meeting_list.clone(),
         );
 
         worktime.export_json()?;

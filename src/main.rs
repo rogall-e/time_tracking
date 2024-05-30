@@ -1,10 +1,8 @@
-use std::io::Result;
 use crossterm::event::{self, KeyCode, KeyEventKind};
+use std::io::Result;
 use time_tracking_basic::app::{App, CurrentScreen, CurrentlyEditing};
+use time_tracking_basic::tui::{Event, Tui};
 use time_tracking_basic::ui::ui;
-use time_tracking_basic::tui::{Tui, Event};
-
-
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -60,7 +58,6 @@ async fn run_app() -> Result<()> {
                     KeyCode::Char('M') => {
                         app.end_meeting();
                     }
-                
 
                     KeyCode::Char('q') => {
                         app.current_screen = CurrentScreen::Exiting;
@@ -73,9 +70,13 @@ async fn run_app() -> Result<()> {
                     KeyCode::Char('y') => {
                         app.do_print = true;
                         app.should_exit = true;
+                        let export_result = app.export_json();
+                        if let Err(e) = export_result {
+                            eprintln!("Error exporting JSON: {}", e);
+                        }
                     }
 
-                    KeyCode::Char('n')  => {
+                    KeyCode::Char('n') => {
                         app.should_exit = true;
                     }
 
@@ -174,4 +175,3 @@ async fn run_app() -> Result<()> {
     tui.exit()?;
     Ok(())
 }
-

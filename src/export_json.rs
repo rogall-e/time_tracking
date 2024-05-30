@@ -1,20 +1,35 @@
 use serde::{Deserialize, Serialize};
-use std::fs::{OpenOptions};
-use std::io::{Write, Result};
+use std::fs::OpenOptions;
+use std::io::{Result, Write};
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct MeetingList {
+    pub meeting_name: String,
+    pub meeting_start_time: String,
+    pub meeting_end_time: String,
+    pub time_in_meeting: i32,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct Worktime {
     pub date: String,
     pub starttime: String,
     pub endtime: String,
+    pub meetings: Vec<MeetingList>,
 }
 
 impl Worktime {
-    pub fn new(date: String, starttime: String, endtime: String) -> Self {
+    pub fn new(
+        date: String,
+        starttime: String,
+        endtime: String,
+        meetings: Vec<MeetingList>,
+    ) -> Self {
         Worktime {
             date,
             starttime,
             endtime,
+            meetings,
         }
     }
 
@@ -34,10 +49,7 @@ impl Worktime {
 }
 
 fn append_worktime_to_jsonl(worktime: &Worktime, filename: &str) -> Result<()> {
-    let file = OpenOptions::new()
-        .append(true)
-        .write(true)
-        .open(filename)?;
+    let file = OpenOptions::new().append(true).open(filename)?;
     writeln!(&file, "{}", worktime.to_jsonl())?;
     Ok(())
 }
@@ -46,7 +58,9 @@ fn create_and_write_jsonl(worktime: &Worktime, filename: &str) -> Result<()> {
     let file = OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .open(filename)?;
     writeln!(&file, "{}", worktime.to_jsonl())?;
     Ok(())
 }
+
