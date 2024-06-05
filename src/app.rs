@@ -112,7 +112,7 @@ impl App {
             meeting_name: self.meeting_name.clone(),
             meeting_start_time: self.meeting_start_time.clone(),
             meeting_end_time: self.meeting_end_time.clone(),
-            time_in_meeting: self.time_in_meetings,
+            time_in_meeting: self.time_in_meetings.clone(),
         };
         self.meeting_list.push(meeting);
         self.time_in_meetings = 0;
