@@ -1,6 +1,9 @@
+use std::ptr::read;
+
 use crate::app::{App, CurrentScreen, CurrentlyEditing};
 use crate::calc_time::parse_time;
-use crate::read_json::read_json;
+//use crate::export_json::Worktime;
+use crate::read_json::read_json; 
 use chrono::{Local, NaiveDate};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
@@ -16,31 +19,56 @@ struct JsonParsed {
 }
 
 impl JsonParsed {
-    fn new() -> Self {
-        match read_json() {
-            Ok(worktime_list) => {
-                let mut worktime_items = Vec::<(String, i32)>::new(); // Changed the type to own String
-                for worktime in worktime_list {
-                    let date_str = worktime.date;
-                    let start_time = parse_time(&worktime.starttime);
-                    let end_time = parse_time(&worktime.endtime);
-                    let start_minutes = start_time.0 * 60 + start_time.1;
-                    let end_minutes = end_time.0 * 60 + end_time.1;
-                    let worktime_in_min: i32 = end_minutes - start_minutes;
-                    worktime_items.push((date_str, worktime_in_min));
-                }
+    fn new(worktime_bool: bool) -> Self {
+        if worktime_bool {
+            match read_json() {
+                Ok(worktime_list) => {
+                    let mut worktime_items = Vec::<(String, i32)>::new(); // Changed the type to own String
+                    for worktime in worktime_list {
+                            let date_str = &worktime.date;
+                            let start_time = parse_time(&worktime.starttime);
+                            let end_time = parse_time(&worktime.endtime);
+                            let start_minutes = start_time.0 * 60 + start_time.1;
+                            let end_minutes = end_time.0 * 60 + end_time.1;
+                            let worktime_in_min: i32 = end_minutes - start_minutes;
+                            worktime_items.push((date_str.to_string(), worktime_in_min))
+                    }
 
-                JsonParsed {
-                    data: worktime_items,
+                    JsonParsed {
+                        data: worktime_items,
+                    }
                 }
+                Err(_) => JsonParsed {
+                    data: Vec::<(String, i32)>::new(),
+                },
             }
-            Err(_) => JsonParsed {
-                data: Vec::<(String, i32)>::new(),
-            },
+        } else {
+            match read_json() {
+                Ok(meetingtime_list) => {
+                    let mut meetingtime_items = Vec::<(String, i32)>::new(); // Changed the type to own String
+                    // sum up all time in meeting <--------------------------------------
+                    for meetingtime in meetingtime_list {
+                            let date_str = &meetingtime.date;
+                            let total_meeting_time = meetingtime.meetings
+                                .into_iter()
+                                .map()
+                            
+                            meetingtime_items.push((date_str.to_string(), worktime_in_min))
+                    }
+
+                    JsonParsed {
+                        data: meetingtime_items,
+                    }
+                }
+                Err(_) => JsonParsed {
+                    data: Vec::<(String, i32)>::new(),
+                },
+            }
         }
     }
 
-    fn data_for_last_seven_days(&self) -> Vec<(&str, u64)> {
+
+    fn data_for_last_seven_days(&self, f: &mut Frame) -> Vec<(&str, u64)> {
         self.data
             .iter()
             .filter(|(date, _)| {
@@ -48,14 +76,22 @@ impl JsonParsed {
                 let today_date = NaiveDate::parse_from_str(&today, "%Y-%m-%d").unwrap();
                 let worktime_date = NaiveDate::parse_from_str(date, "%Y-%m-%d").unwrap();
                 let days_difference = today_date.signed_duration_since(worktime_date).num_days();
-                days_difference >= 0 && days_difference <= 7
+
+                match f.size().width {
+                    0..=50 => days_difference >= 0 && days_difference <= 2,
+                    51..=100 => days_difference >= 0 && days_difference <= 3,
+                    101..=150 => days_difference >= 0 && days_difference <= 4,
+                    151..=200 => days_difference >= 0 && days_difference <= 5,
+                    _ => days_difference >= 0 && days_difference <= 6,
+                }
+
             })
             .map(|(date, worktime_in_min)| (date.as_str(), *worktime_in_min as u64))
             .collect()
     }
 }
 
-pub fn ui(f: &mut Frame, app: &App) {
+pub fn ui(f: &mut Frame<'_>, app: &App) {
     // Create the layout sections.
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -73,7 +109,7 @@ pub fn ui(f: &mut Frame, app: &App) {
 
     let left_inner_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
         .split(inner_chunks[0]);
 
     let left_inner_lower_chunks = Layout::default()
@@ -85,6 +121,11 @@ pub fn ui(f: &mut Frame, app: &App) {
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(left_inner_lower_chunks[0]);
+
+    let barchart_chunk = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(84), Constraint::Percentage(16)])
+        .split(inner_chunks[1]);
 
     // Title
     let title_block = Block::default()
@@ -100,6 +141,7 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(title, chunks[0]);
 
     // List of Starttime and Endtime
+
     let mut starttime_list_items = Vec::<ListItem>::new();
     let mut endtime_list_items = Vec::<ListItem>::new();
 
@@ -169,15 +211,23 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(meeting_list, left_inner_lower_chunks[1]);
 
     // Worktime Barchart
-    let json_data = JsonParsed::new();
+    // Load Json Data
+    let json_data = JsonParsed::new(true);
+    let data: Vec<(&str, u64)> = json_data.data_for_last_seven_days(f);
 
-    let data: Vec<(&str, u64)> = json_data.data_for_last_seven_days();
-
+    let days = match f.size().width {
+        0..=50 => 2,
+        51..=100 => 3,
+        101..=150 => 4,
+        151..=200 => 5,
+        _ => 6,
+    };
+    
     let barchart = BarChart::default()
         .data(&data)
         .block(
             Block::default()
-                .title("Worktime in Minutes")
+                .title(format!("Worktime in Minutes for the last {} Days", days))
                 .borders(Borders::ALL),
         )
         .bar_width(10)
@@ -188,13 +238,39 @@ pub fn ui(f: &mut Frame, app: &App) {
                 .fg(Color::Yellow)
                 .add_modifier(Modifier::ITALIC),
         )
-        .style(Style::default().fg(Color::White));
+        .style(Style::default().fg(Color::White))
+        .max(650);
 
-    f.render_widget(barchart, inner_chunks[1]);
+    f.render_widget(barchart, barchart_chunk[0]);
+    
 
+    // bar for current day
+    let current_date = Local::now().format("%Y-%m-%d").to_string();
+    let mut current_data: Vec<(&str, u64)> = Vec::new();
+    current_data.push((&current_date, app.current_worktime));
+
+    let barchart_today = BarChart::default()
+        .data(&current_data)
+        .block(
+            Block::default()
+                .title("Worktime in Minutes for Today")
+                .borders(Borders::ALL),
+        )
+        .bar_width(10)
+        .bar_gap(1)
+        .value_style(Style::default().fg(Color::White).bg(Color::Green))
+        .label_style(
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::ITALIC),
+        )
+        .style(Style::default().fg(Color::Blue))
+        .max(650);
+
+    f.render_widget(barchart_today, barchart_chunk[1]);
+   
     // Clock
     let current_time = Local::now().format("%H:%M").to_string();
-
     if f.size().width > 100 && f.size().height > 30 {
         let big_text = BigTextBuilder::default()
             .pixel_size(PixelSize::Full)
@@ -267,19 +343,19 @@ pub fn ui(f: &mut Frame, app: &App) {
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::EditingStarttime => Span::styled(
-                "(ESC) to cancel/enter to complete",
+                "(ESC) to cancel | (enter) to complete",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::EditingEndtime => Span::styled(
-                "(ESC) to cancel/enter to complete",
+                "(ESC) to cancel | (enter) to complete",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::EditingMeetingName => Span::styled(
-                "(ESC) to cancel/enter to complete",
+                "(ESC) to cancel | (enter) to complete",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Exiting => Span::styled(
-                "Press (q) to quit | (s) to edit Starttime | (e) to edit Endtime | (m) start/stop Meeting",
+                "Press (q) to quit | (s) to edit Starttime | (e) to edit Endtime | (m) start/stop Meeting | (M) stop Meeting",
                 Style::default().fg(Color::Red),
             ),
         }

@@ -63,4 +63,3 @@ fn create_and_write_jsonl(worktime: &Worktime, filename: &str) -> Result<()> {
     writeln!(&file, "{}", worktime.to_jsonl())?;
     Ok(())
 }
-

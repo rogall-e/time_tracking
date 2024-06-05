@@ -35,6 +35,8 @@ pub struct App {
     pub meeting_name: String,
     pub do_print: bool,
     pub should_exit: bool,
+    pub default_starttime: String,
+    pub current_worktime: u64
 }
 
 impl App {
@@ -57,6 +59,8 @@ impl App {
             meeting_name: String::new(),
             do_print: false,
             should_exit: false,
+            default_starttime: String::from("08:45"),
+            current_worktime: 0
         }
     }
 

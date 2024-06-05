@@ -3,6 +3,7 @@ use std::io::Result;
 use time_tracking_basic::app::{App, CurrentScreen, CurrentlyEditing};
 use time_tracking_basic::tui::{Event, Tui};
 use time_tracking_basic::ui::ui;
+use time_tracking_basic::calc_time::parse_time;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -31,6 +32,23 @@ async fn run_app() -> Result<()> {
                     app.time_in_meetings += 1;
                     counter = 0;
                 }
+            }
+            let current_time = chrono::Local::now().format("%H:%M").to_string();
+            if app.starttime_pairs.is_empty() {
+                let start_time = parse_time(&app.default_starttime);
+                let start_minutes = start_time.0 * 60 + start_time.1;
+                let current_time = parse_time(&current_time);
+                let current_minutes = current_time.0 * 60 + current_time.1;
+                let current_worktime = current_minutes - start_minutes;
+                app.current_worktime = current_worktime as u64
+            } 
+            if app.starttime_pairs.contains_key(&app.starttime_key) {
+                let start_time = parse_time(&app.starttime_pairs[&app.starttime_key]);
+                let start_minutes = start_time.0 * 60 + start_time.1;
+                let current_time = parse_time(&current_time);
+                let current_minutes = current_time.0 * 60 + current_time.1;
+                let current_worktime = current_minutes - start_minutes;
+                app.current_worktime = current_worktime as u64
             }
         }
 

@@ -20,3 +20,15 @@ pub fn read_json() -> Result<Vec<Worktime>> {
         .unwrap();
     Ok(worktime_days)
 }
+
+pub async fn get_json_data() -> Vec<Worktime> {
+    match read_json() {
+        Ok(json_response) => {
+            json_response
+        }
+        Err(_) => {
+            let json_response = Vec::<Worktime>::new();
+            json_response
+        }
+    }
+}
