@@ -7,6 +7,10 @@ use time_tracking_basic::calc_time::parse_time;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // create folder to save the data
+    if !std::path::Path::new("data").exists() {
+        std::fs::create_dir_all("data")?;
+    }
     // create app and run it
     let res = run_app().await;
     res?;

@@ -20,7 +20,7 @@ pub struct Worktime {
 }
 
 pub fn read_json() -> Result<Vec<Worktime>> {
-    let file = File::open("worktime.jsonl")?;
+    let file = File::open("data/worktime.jsonl")?;
     let reader = BufReader::new(file);
     let json_reader = JsonLinesReader::new(reader);
     let worktime_days = json_reader

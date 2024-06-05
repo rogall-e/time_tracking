@@ -38,7 +38,7 @@ impl Worktime {
     }
 
     pub fn export_json(&mut self) -> Result<()> {
-        let filename = "worktime.jsonl";
+        let filename = "data/worktime.jsonl";
         if std::path::Path::new(filename).exists() {
             append_worktime_to_jsonl(self, filename)?;
         } else {
