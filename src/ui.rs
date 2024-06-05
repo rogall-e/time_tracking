@@ -5,14 +5,24 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
+    symbols::scrollbar,
+    widgets::{Block, 
+        Borders, 
+        Clear, 
+        List, 
+        ListItem, 
+        Paragraph, 
+        Wrap, 
+        Scrollbar, 
+        ScrollbarOrientation
+    },
     Frame,
 };
 use tui_big_text::{BigTextBuilder, PixelSize};
 
 use crate::barchart::{BarChartApp, draw_bar_with_group_labels};
 
-pub fn ui(f: &mut Frame<'_>, app: &App) {
+pub fn ui(f: &mut Frame<'_>, app: &mut App) {
     // Create the layout sections.
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -136,14 +146,13 @@ pub fn ui(f: &mut Frame<'_>, app: &App) {
     let barchart_app = BarChartApp::new();
     
     let barchart = draw_bar_with_group_labels(&barchart_app, false);
-
+   
     f.render_widget(barchart, barchart_chunk[0]);
-    
 
     // bar for current day
     let current_date = Local::now().format("%Y-%m-%d").to_string();
 
-    let barchart_app_today = BarChartApp::new_current(app.current_worktime, app.time_in_meetings as u64, current_date);
+    let barchart_app_today = BarChartApp::new_current(app.current_worktime, app.total_time_in_meetings as u64, current_date);
     let barchart_today = draw_bar_with_group_labels(&barchart_app_today, true);
 
     f.render_widget(barchart_today, barchart_chunk[1]);

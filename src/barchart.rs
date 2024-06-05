@@ -9,26 +9,26 @@ use crate::read_json::read_json;
 
 #[derive(Clone)]
 pub struct TimeData<'a> {
-    pub time: [u64; 6],
+    pub time: [u64; 5],
     pub label: &'a str, //worktime or meetingtime
     pub bar_style: Style,
 }
 
 pub struct BarChartApp<'a> {
     pub data: Vec<TimeData<'a>>,
-    pub days: [String; 6],
+    pub days: [String; 5],
 }
 
 impl<'a> BarChartApp<'a> {
     pub fn new() -> Self {
         match read_json() {
             Ok(worktime_list) => {
-                let mut worktime_in_min_list = [0, 0, 0, 0, 0, 0];
-                let mut meetingtime_in_min_list = [0, 0, 0, 0, 0, 0];
-                let mut days_list:[String; 6] =["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
+                let mut worktime_in_min_list = [0, 0, 0, 0, 0];
+                let mut meetingtime_in_min_list = [0, 0, 0, 0, 0];
+                let mut days_list:[String; 5] =["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
 
                 let mut idx = 0;
-                for worktime in worktime_list.iter().cloned().rev().take(6).rev() {
+                for worktime in worktime_list.iter().cloned().rev().take(5).rev() {
                         let date_string = worktime.date;
                         days_list[idx] = date_string;
 
@@ -67,9 +67,9 @@ impl<'a> BarChartApp<'a> {
                             
             },
             Err(_) => {
-                let worktime_in_min_list = [0, 0, 0, 0, 0, 0];
-                let meetingtime_in_min_list = [0, 0, 0, 0, 0, 0];
-                let days_list:[String; 6] =["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
+                let worktime_in_min_list = [0, 0, 0, 0, 0];
+                let meetingtime_in_min_list = [0, 0, 0, 0, 0];
+                let days_list:[String; 5] =["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
                 BarChartApp {
                     data: [
                         TimeData {
@@ -92,17 +92,17 @@ impl<'a> BarChartApp<'a> {
         BarChartApp {
             data: [
                 TimeData {
-                    time: [worktime_in_min, 0, 0, 0, 0, 0],
+                    time: [worktime_in_min, 0, 0, 0, 0],
                     label: "Worktime",
                     bar_style: Style::default().fg(Color::Green),
                 },
                 TimeData {
-                    time: [time_in_meetings, 0, 0, 0, 0, 0],
+                    time: [time_in_meetings, 0, 0, 0, 0],
                     label: "Meetingtime",
                     bar_style: Style::default().fg(Color::Red),
                 },
             ].to_vec(),
-            days: [date, "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()],
+            days: [date, "".to_string(), "".to_string(), "".to_string(), "".to_string()],
         }
     }
 }
@@ -148,7 +148,9 @@ pub fn draw_bar_with_group_labels<'a>(barchart: &'a BarChartApp, current_day: bo
 
     if current_day {
         let mut barchart = BarChart::default()
-            .block(Block::bordered().title("Today").style(Style::default().fg(Color::White)))
+            .block(Block::bordered()
+                .title("Today")
+                .style(Style::default().fg(Color::White)))
             .bar_width(5)
             .group_gap(2)
             .bar_gap(0)

@@ -2,6 +2,7 @@ use crate::export_json::{MeetingList, Worktime};
 use anyhow::Result;
 use chrono::Local;
 use std::collections::HashMap;
+use ratatui::widgets::ScrollbarState;
 
 pub enum CurrentScreen {
     Main,
@@ -38,6 +39,8 @@ pub struct App {
     pub default_starttime: String,
     pub current_worktime: u64,
     pub total_time_in_meetings: i32,
+    pub scrollbar_state: ScrollbarState,
+    pub horizontal_scroll: usize,
 }
 
 impl App {
@@ -63,6 +66,8 @@ impl App {
             default_starttime: String::from("08:45"),
             current_worktime: 0,
             total_time_in_meetings: 0,
+            scrollbar_state: ScrollbarState::default(),
+            horizontal_scroll: 0,
         }
     }
 
@@ -114,6 +119,7 @@ impl App {
             meeting_end_time: self.meeting_end_time.clone(),
             time_in_meeting: self.time_in_meetings.clone(),
         };
+        //self.total_time_in_meetings += self.time_in_meetings;
         self.meeting_list.push(meeting);
         self.time_in_meetings = 0;
     }

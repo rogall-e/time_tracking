@@ -26,7 +26,7 @@ async fn run_app() -> Result<()> {
     loop {
         let event = tui.next().await?;
         if let Event::Render = event.clone() {
-            tui.draw(|f| ui(f, &app))?;
+            tui.draw(|f| ui(f, &mut app))?;
         };
 
         if let Event::Tick = event.clone() {
@@ -93,6 +93,16 @@ async fn run_app() -> Result<()> {
 
                     KeyCode::Char('q') => {
                         app.current_screen = CurrentScreen::Exiting;
+                    }
+
+                    KeyCode::Char('r') | KeyCode::Right => {
+                        app.horizontal_scroll = app.horizontal_scroll.saturating_add(1);
+                        app.scrollbar_state = app.scrollbar_state.position(app.horizontal_scroll);
+                    }
+
+                    KeyCode::Char('l') | KeyCode::Left => {
+                        app.horizontal_scroll = app.horizontal_scroll.saturating_sub(1);
+                        app.scrollbar_state = app.scrollbar_state.position(app.horizontal_scroll);
                     }
 
                     _ => {}
