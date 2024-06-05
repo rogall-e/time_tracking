@@ -3,11 +3,20 @@ use serde_jsonlines::JsonLinesReader;
 use std::fs::File;
 use std::io::{BufReader, Result};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
+pub struct MeetingList {
+    pub meeting_name: String,
+    pub meeting_start_time: String,
+    pub meeting_end_time: String,
+    pub time_in_meeting: i32,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Worktime {
     pub date: String,
     pub starttime: String,
     pub endtime: String,
+    pub meetings: Vec<MeetingList>,
 }
 
 pub fn read_json() -> Result<Vec<Worktime>> {

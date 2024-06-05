@@ -50,6 +50,16 @@ async fn run_app() -> Result<()> {
                 let current_worktime = current_minutes - start_minutes;
                 app.current_worktime = current_worktime as u64
             }
+
+            app.total_time_in_meetings = app.meeting_list
+                .clone()
+                .into_iter()
+                .map(|x| x.time_in_meeting)
+                .sum();
+
+            if app.meeting_running {
+                app.total_time_in_meetings += app.time_in_meetings;
+            }
         }
 
         if let Event::Key(key) = event.clone() {
