@@ -1,7 +1,6 @@
+
 use ratatui::{
-    style::{Color, Modifier, Style},
-    text::Line,
-    widgets::{Bar, BarChart, BarGroup, Block},
+    layout::Direction, style::{Color, Modifier, Style}, text::{Line, Span}, widgets::{Bar, BarChart, BarGroup, Block, Paragraph}
 };
 
 use crate::calc_time::parse_time;
@@ -14,6 +13,7 @@ pub struct TimeData<'a> {
     pub bar_style: Style,
 }
 
+#[derive(Clone)]
 pub struct BarChartApp<'a> {
     pub data: Vec<TimeData<'a>>,
     pub days: [String; 5],
@@ -142,24 +142,19 @@ pub fn create_groups<'a>(barchart: &'a BarChartApp) -> Vec<BarGroup<'a>> {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-pub fn draw_bar_with_group_labels<'a>(barchart: &'a BarChartApp, current_day: bool) -> BarChart<'a>{
+pub fn draw_bar_with_group_labels<'a>(barchart: &'a BarChartApp, current_day: bool, block: Block<'static>) -> BarChart<'a>{
 
     let groups = create_groups(barchart);
 
     if current_day {
         let mut barchart = BarChart::default()
-            .block(Block::bordered()
-                .title("Today")
-                .style(Style::default().fg(Color::White)))
-            .bar_width(5)
+            //.block(Block::bordered().title("Today's worktime and meetingtime").border_style(Style::default().fg(Color::White)))
+            .block(block)
+            .bar_width(3)
             .group_gap(2)
             .bar_gap(0)
-            .label_style(
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::ITALIC),
-            )
-            .max(700);
+            .max(700)
+            .direction(Direction::Horizontal);
 
         for group in groups {
             barchart = barchart.data(group);
@@ -168,7 +163,8 @@ pub fn draw_bar_with_group_labels<'a>(barchart: &'a BarChartApp, current_day: bo
         barchart
     } else {
         let mut barchart = BarChart::default()
-            .block(Block::bordered().title("Worktime (green) and Time in Meetings (red) per Day").style(Style::default().fg(Color::White)))
+            //.block(Block::bordered().title("Worktime and meetingtime for the last 5 days").border_style(Style::default().fg(Color::White)))
+            .block(block)
             .bar_width(5)
             .group_gap(2)
             .bar_gap(0)
@@ -187,3 +183,25 @@ pub fn draw_bar_with_group_labels<'a>(barchart: &'a BarChartApp, current_day: bo
     }
 }
 
+pub fn draw_legend(block: Block<'static>) -> Paragraph<'static> {
+    let text = vec![
+        Line::from(Span::styled(
+            "Time (in min) for:",
+            Style::default()
+                .add_modifier(Modifier::BOLD)
+                .fg(Color::White),
+        )),
+        Line::from(Span::styled(
+            "- Worktime",
+            Style::default().fg(Color::Green),
+        )),
+        Line::from(Span::styled(
+            "- Meetings",
+            Style::default().fg(Color::Red),
+        )),
+    ];
+
+    //let block = Block::bordered().style(Style::default().fg(Color::White));
+    let paragraph = Paragraph::new(text).block(block);
+    paragraph
+}

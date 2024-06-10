@@ -886,6 +886,7 @@ dependencies = [
  "serde",
  "serde-jsonlines",
  "serde_json",
+ "strum",
  "tokio",
  "tokio-util",
  "tui-big-text",

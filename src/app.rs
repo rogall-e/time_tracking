@@ -2,7 +2,15 @@ use crate::export_json::{MeetingList, Worktime};
 use anyhow::Result;
 use chrono::Local;
 use std::collections::HashMap;
-use ratatui::widgets::ScrollbarState;
+
+use crate::tabs::SelectedTab;
+use ratatui::{
+    buffer::Buffer,
+    widgets::{ScrollbarState, Tabs, Widget},
+    layout::{Constraint, Layout, Rect},
+    style::Color,
+};
+use strum:: IntoEnumIterator;
 
 pub enum CurrentScreen {
     Main,
@@ -41,6 +49,18 @@ pub struct App {
     pub total_time_in_meetings: i32,
     pub scrollbar_state: ScrollbarState,
     pub horizontal_scroll: usize,
+    pub selected_tab: SelectedTab,
+}
+
+impl Widget for &App {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        use Constraint::{Length, Min};
+        let vertical = Layout::vertical([Length(1), Min(0)]);
+        let [header_area, inner_area] = vertical.areas(area);
+
+        self.render_tabs(header_area, buf);
+        self.selected_tab.render(inner_area, buf);
+    }
 }
 
 impl App {
@@ -68,7 +88,28 @@ impl App {
             total_time_in_meetings: 0,
             scrollbar_state: ScrollbarState::default(),
             horizontal_scroll: 0,
+            selected_tab: SelectedTab::Tab1,
         }
+    }
+
+    pub fn next_tab(&mut self) {
+        self.selected_tab = self.selected_tab.next();
+    }
+
+    pub fn previous_tab(&mut self) {
+        self.selected_tab = self.selected_tab.previous();
+    }
+
+    fn render_tabs(&self, area: Rect, buf: &mut Buffer) {
+        let titles = SelectedTab::iter().map(SelectedTab::title);
+        let highlight_style = (Color::default(), self.selected_tab.palette().c700);
+        let selected_tab_index = self.selected_tab as usize;
+        Tabs::new(titles)
+            .highlight_style(highlight_style)
+            .select(selected_tab_index)
+            .padding("", "")
+            .divider(" ")
+            .render(area, buf);
     }
 
     pub fn save_starttime_value(&mut self) {

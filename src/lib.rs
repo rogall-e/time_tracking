@@ -5,3 +5,4 @@ pub mod read_json;
 pub mod tui;
 pub mod ui;
 pub mod barchart;
+pub mod tabs;

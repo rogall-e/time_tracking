@@ -1,22 +1,36 @@
 
 use crate::app::{App, CurrentScreen, CurrentlyEditing};
- use chrono::Local;
+use chrono::Local;
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
-    text::{Line, Span, Text},
-    symbols::scrollbar,
-    widgets::{Block, 
+    layout::{
+        Constraint, 
+        Direction, 
+        Layout, 
+        Rect
+    }, 
+    style::{
+        Color, 
+        Modifier, 
+        Style
+    }, 
+    text::{
+        Line, 
+        Span, 
+        Text
+    }, 
+    widgets::{
+        Block, 
         Borders, 
         Clear, 
         List, 
         ListItem, 
         Paragraph, 
-        Wrap, 
-        Scrollbar, 
-        ScrollbarOrientation
-    },
-    Frame,
+        Widget, 
+        Wrap 
+        //Scrollbar, 
+        //ScrollbarOrientation
+    }, 
+    Frame
 };
 use tui_big_text::{BigTextBuilder, PixelSize};
 
@@ -43,6 +57,12 @@ pub fn ui(f: &mut Frame<'_>, app: &mut App) {
         .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
         .split(inner_chunks[0]);
 
+    let left_inner_upper_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
+        .split(left_inner_chunks[0]);
+
+
     let left_inner_lower_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(20), Constraint::Percentage(80)])
@@ -52,11 +72,6 @@ pub fn ui(f: &mut Frame<'_>, app: &mut App) {
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(left_inner_lower_chunks[0]);
-
-    let barchart_chunk = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(84), Constraint::Percentage(16)])
-        .split(inner_chunks[1]);
 
     // Title
     let title_block = Block::default()
@@ -105,7 +120,7 @@ pub fn ui(f: &mut Frame<'_>, app: &mut App) {
 
     f.render_widget(starttime_list, start_endtime_chunck[0]);
     f.render_widget(endtime_list, start_endtime_chunck[1]);
-
+   
     // List of Meetings
     let mut meeting_list_items = Vec::<ListItem>::new();
 
@@ -141,22 +156,21 @@ pub fn ui(f: &mut Frame<'_>, app: &mut App) {
 
     f.render_widget(meeting_list, left_inner_lower_chunks[1]);
 
-    // Worktime Barchart
-    // Load Json Data
-    let barchart_app = BarChartApp::new();
-    
-    let barchart = draw_bar_with_group_labels(&barchart_app, false);
-   
-    f.render_widget(barchart, barchart_chunk[0]);
+    // Tabs
+  
+    app.render(inner_chunks[1], f.buffer_mut());
 
-    // bar for current day
+
+    // Barchart
+    let today_block = Block::bordered().title("Today's worktime and meetingtime").border_style(Style::default().fg(Color::White));
+
     let current_date = Local::now().format("%Y-%m-%d").to_string();
 
     let barchart_app_today = BarChartApp::new_current(app.current_worktime, app.total_time_in_meetings as u64, current_date);
-    let barchart_today = draw_bar_with_group_labels(&barchart_app_today, true);
+    let barchart_today = draw_bar_with_group_labels(&barchart_app_today, true, today_block);
 
-    f.render_widget(barchart_today, barchart_chunk[1]);
-   
+    f.render_widget(barchart_today, left_inner_upper_chunks[1]);
+    
     // Clock
     let current_time = Local::now().format("%H:%M").to_string();
     if f.size().width > 100 && f.size().height > 30 {
@@ -166,7 +180,7 @@ pub fn ui(f: &mut Frame<'_>, app: &mut App) {
             .lines(vec![current_time.into()])
             .build()
             .unwrap();
-        f.render_widget(big_text, left_inner_chunks[0]);
+        f.render_widget(big_text, left_inner_upper_chunks[0]);
     } else {
         let small_text = BigTextBuilder::default()
             .pixel_size(PixelSize::Quadrant)
@@ -175,7 +189,7 @@ pub fn ui(f: &mut Frame<'_>, app: &mut App) {
             .build()
             .unwrap();
 
-        f.render_widget(small_text, left_inner_chunks[0]);
+        f.render_widget(small_text, left_inner_upper_chunks[0]);
     }
 
     // Navigation text
@@ -327,7 +341,7 @@ pub fn ui(f: &mut Frame<'_>, app: &mut App) {
             );
 
         let exit_text = Text::styled(
-            "Would you like to output the buffer and save the worktime as json? (y/n)",
+            "Would you like to save the worktime and meeting data as json? (y/n)",
             Style::default()
                 .fg(Color::Red)
                 .add_modifier(Modifier::ITALIC),

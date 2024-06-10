@@ -95,12 +95,20 @@ async fn run_app() -> Result<()> {
                         app.current_screen = CurrentScreen::Exiting;
                     }
 
-                    KeyCode::Char('r') | KeyCode::Right => {
+                    KeyCode::Char('r') => {
+                        app.next_tab();
+                    }
+                    
+                    KeyCode::Char('l') => {
+                        app.previous_tab();
+                    } 
+                    
+                    KeyCode::Right => {
                         app.horizontal_scroll = app.horizontal_scroll.saturating_add(1);
                         app.scrollbar_state = app.scrollbar_state.position(app.horizontal_scroll);
                     }
-
-                    KeyCode::Char('l') | KeyCode::Left => {
+                    
+                    KeyCode::Left => {
                         app.horizontal_scroll = app.horizontal_scroll.saturating_sub(1);
                         app.scrollbar_state = app.scrollbar_state.position(app.horizontal_scroll);
                     }
