@@ -189,12 +189,11 @@ async fn run_app() -> Result<()> {
                             }
                             SelectedTab::Tab4 => {
                                 if !app.focus {
-                                    app.focus = true;
+                                    app.start_focus_time();
                                     app.chache_focus_time();
+                                    
                                 } else {
-                                    app.focus = false;
-                                    app.focus_time_total += app.focus_time;
-                                    app.focus_time = 0;
+                                    app.end_focus_time();
                                     app.chache_focus_time();
                                 }
                             }
@@ -217,7 +216,7 @@ async fn run_app() -> Result<()> {
                     }
 
                     KeyCode::Char('n') => {
-                        app.should_exit = true;
+                        app.current_screen = CurrentScreen::Main
                     }
 
                     KeyCode::Esc => {
@@ -283,7 +282,7 @@ async fn run_app() -> Result<()> {
                     match key.code {
                         KeyCode::Enter => {
                             if let Some(CurrentlyEditing::MeetingName) = &app.currently_editing {
-                                app.save_meeting_name();
+                                app.start_meeting();
                                 app.current_screen = CurrentScreen::Main;
                             }
                         }

@@ -24,6 +24,7 @@ pub struct Worktime {
     pub starttime: String,
     pub endtime: String,
     pub meetings: Vec<MeetingList>,
+    pub focus_time: Vec<FocusTime>,
 }
 
 impl Worktime {
@@ -32,12 +33,14 @@ impl Worktime {
         starttime: String,
         endtime: String,
         meetings: Vec<MeetingList>,
+        focus_time: Vec<FocusTime>,
     ) -> Self {
         Worktime {
             date,
             starttime,
             endtime,
             meetings,
+            focus_time,
         }
     }
 

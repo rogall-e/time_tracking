@@ -89,8 +89,13 @@ impl SelectedTab {
                 let list_item: Vec<ListItem> = worktime
                     .iter()
                     .map(|worktime| {
-                        ListItem::new(format!("Date: {}, Starttime: {}, Endtime: {}", worktime.date, worktime.starttime, worktime.endtime))
+                        ListItem::new(format!(
+                            "Date: {}, Starttime: {}, Endtime: {}",
+                            worktime.date, worktime.starttime, worktime.endtime
+                        )
+                    )
                     })
+                    .rev()
                     .collect();
 
                 let list = List::new(list_item)
@@ -118,8 +123,8 @@ impl SelectedTab {
                 
                 
             }
-            Err(e) => {
-                Paragraph::new(format!("Error: {}", e))
+            Err(_e) => {
+                Paragraph::new("No history yet!")
                 .block(self.block())
                 .render(area, buf);
             }

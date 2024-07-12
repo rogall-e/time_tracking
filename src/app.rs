@@ -153,18 +153,14 @@ impl App {
         Ok(())
     }
 
-    pub fn save_meeting_name(&mut self) {
+    pub fn start_meeting(&mut self) {
         self.meeting_running = true;
         self.meeting_name = self.meeting_name_input.clone();
         self.meeting_name_input = String::new();
         self.meeting_start_time = Local::now().format("%H:%M").to_string();
         self.currently_editing = None;
+        self.selected_tab = SelectedTab::Tab5;
         //self.time_in_meetings = meeting_timer(self.meeting_running);
-    }
-
-    pub fn start_meeting(&mut self) {
-        self.meeting_running = true;
-        self.meeting_start_time = Local::now().format("%H:%M").to_string();
     }
 
     pub fn end_meeting(&mut self) {
@@ -209,10 +205,6 @@ impl App {
         self.list_state.select(Some(i));
     }
 
-    pub fn start_focus_time(&mut self) {
-        self.focus = true;
-    }
-
     pub fn get_data_len(&self) -> usize {
         match read_json() {
             Ok(json_response) => {
@@ -222,6 +214,24 @@ impl App {
                 0
             }
         }
+    }
+
+    pub fn start_focus_time(&mut self) {
+        self.focus = true;
+        self.focus_time_start = Local::now().format("%H:%M").to_string();
+    }
+
+    pub fn end_focus_time(&mut self) {
+        self.focus = false;
+        self.focus_time_end = Local::now().format("%H:%M").to_string();
+        let focus_time = FocusTime {
+            focus_time_start: self.focus_time_start.clone(),
+            focus_time_end: self.focus_time_end.clone(),
+            focus_time: self.focus_time as i32,
+        };
+        self.focus_time_list.push(focus_time);
+        self.focus_time_total += self.focus_time;
+        self.focus_time = 0;
     }
 
     pub fn chache_focus_time(&mut self) {
@@ -240,6 +250,7 @@ impl App {
                 .clone(),
             self.endtime_pairs.get(&self.endtime_key).unwrap().clone(),
             self.meeting_list.clone(),
+            self.focus_time_list.clone(),
         );
 
         worktime.export_json()?;

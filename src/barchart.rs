@@ -25,6 +25,7 @@ impl<'a> BarChartApp<'a> {
             Ok(worktime_list) => {
                 let mut worktime_in_min_list = [0, 0, 0, 0, 0];
                 let mut meetingtime_in_min_list = [0, 0, 0, 0, 0];
+                let mut focustime_in_min_list = [0, 0, 0, 0, 0];
                 let mut days_list:[String; 5] =["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
 
                 let mut idx = 0;
@@ -46,6 +47,14 @@ impl<'a> BarChartApp<'a> {
                             .sum();
 
                         meetingtime_in_min_list[idx] = total_meeting_time as u64;
+
+
+                        let total_focus_time:i32 = worktime.focus_time
+                            .into_iter()
+                            .map(|x| x.focus_time)
+                            .sum();
+
+                        focustime_in_min_list[idx] = total_focus_time as u64;
                         idx += 1;
                 };
                 
@@ -61,6 +70,11 @@ impl<'a> BarChartApp<'a> {
                             label: "Meetingtime",
                             bar_style: Style::default().fg(Color::Red),
                         },
+                        TimeData {
+                            time: focustime_in_min_list,
+                            label: "Focus Time",
+                            bar_style: Style::default().fg(Color::Blue),
+                        },
                     ].to_vec(),
                     days: days_list,
                 }   
@@ -69,6 +83,7 @@ impl<'a> BarChartApp<'a> {
             Err(_) => {
                 let worktime_in_min_list = [0, 0, 0, 0, 0];
                 let meetingtime_in_min_list = [0, 0, 0, 0, 0];
+                let focustime_in_min_list = [0, 0, 0, 0, 0];
                 let days_list:[String; 5] =["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
                 BarChartApp {
                     data: [
@@ -82,13 +97,18 @@ impl<'a> BarChartApp<'a> {
                             label: "Meetingtime",
                             bar_style: Style::default().fg(Color::Red),
                         },
+                        TimeData {
+                            time: focustime_in_min_list,
+                            label: "Focus Time",
+                            bar_style: Style::default().fg(Color::Blue),
+                        },
                     ].to_vec(),
                     days: days_list,
                 }
             },
         }
     }
-    pub fn new_current(worktime_in_min: u64, time_in_meetings:u64, date: String) -> Self {
+    pub fn new_current(worktime_in_min: u64, time_in_meetings:u64, _focustime_in_min: u64, date: String) -> Self {
         BarChartApp {
             data: [
                 TimeData {
@@ -135,7 +155,7 @@ pub fn create_groups<'a>(barchart: &'a BarChartApp) -> Vec<BarGroup<'a>> {
                 .collect();
            
             BarGroup::default()
-                .label(Line::from(days.as_str()))
+                .label(Line::from(days.as_str()).centered())
                 .bars(&bars)
         })
         .collect()
@@ -165,9 +185,9 @@ pub fn draw_bar_with_group_labels<'a>(barchart: &'a BarChartApp, current_day: bo
         let mut barchart = BarChart::default()
             //.block(Block::bordered().title("Worktime and meetingtime for the last 5 days").border_style(Style::default().fg(Color::White)))
             .block(block)
-            .bar_width(5)
+            .bar_width(3)
             .group_gap(2)
-            .bar_gap(0)
+            .bar_gap(1)
             .label_style(
                 Style::default()
                     .fg(Color::Yellow)
@@ -198,6 +218,10 @@ pub fn draw_legend(block: Block<'static>) -> Paragraph<'static> {
         Line::from(Span::styled(
             "- Meetings",
             Style::default().fg(Color::Red),
+        )),
+        Line::from(Span::styled(
+            "- Focus Time",
+            Style::default().fg(Color::Blue),
         )),
     ];
     

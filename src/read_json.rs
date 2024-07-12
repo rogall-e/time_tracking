@@ -12,11 +12,19 @@ pub struct MeetingList {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+pub struct FocusTime {
+    pub focus_time_start: String,
+    pub focus_time_end: String,
+    pub focus_time: i32,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Worktime {
     pub date: String,
     pub starttime: String,
     pub endtime: String,
     pub meetings: Vec<MeetingList>,
+    pub focus_time: Vec<FocusTime>,
 }
 
 pub fn read_json() -> Result<Vec<Worktime>> {

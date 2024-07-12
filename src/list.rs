@@ -43,3 +43,8 @@ pub fn draw_help(block: Block<'static>) -> Paragraph<'static> {
     let paragraph = Paragraph::new(text).block(block);
     paragraph
 }
+
+
+//pub fn switch_list_items(list: Vec<Line>) -> Vec<Line> {
+//    
+//}

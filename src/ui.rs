@@ -166,7 +166,11 @@ pub fn ui(f: &mut Frame<'_>, app: &mut App) {
 
     let current_date = Local::now().format("%Y-%m-%d").to_string();
 
-    let barchart_app_today = BarChartApp::new_current(app.current_worktime, app.total_time_in_meetings as u64, current_date);
+    let barchart_app_today = BarChartApp::new_current(
+                app.current_worktime, 
+                app.total_time_in_meetings as u64, 
+                app.focus_time_total as u64, 
+                current_date);
     let barchart_today = draw_bar_with_group_labels(&barchart_app_today, true, today_block);
 
     f.render_widget(barchart_today, left_inner_upper_chunks[1]);
@@ -341,7 +345,7 @@ pub fn ui(f: &mut Frame<'_>, app: &mut App) {
             );
 
         let exit_text = Text::styled(
-            "Would you like to save the worktime and meeting data as json? (y/n)",
+            "Do you really want to exit? (y/n)",
             Style::default()
                 .fg(Color::Red)
                 .add_modifier(Modifier::ITALIC),
