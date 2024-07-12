@@ -10,6 +10,14 @@ pub struct MeetingList {
     pub time_in_meeting: i32,
 }
 
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct FocusTime {
+    pub focus_time_start: String,
+    pub focus_time_end: String,
+    pub focus_time: i32,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Worktime {
     pub date: String,

@@ -1,12 +1,12 @@
-use crate::export_json::{MeetingList, Worktime};
+use crate::{export_json::{FocusTime, MeetingList, Worktime}, read_json::read_json};
 use anyhow::Result;
 use chrono::Local;
 use std::collections::HashMap;
-
+use std::io::prelude::*;
 use crate::tabs::SelectedTab;
 use ratatui::{
     buffer::Buffer,
-    widgets::{ScrollbarState, Tabs, Widget},
+    widgets::{ScrollbarState, Tabs, Widget, ListState},
     layout::{Constraint, Layout, Rect},
     style::Color,
 };
@@ -50,6 +50,14 @@ pub struct App {
     pub scrollbar_state: ScrollbarState,
     pub horizontal_scroll: usize,
     pub selected_tab: SelectedTab,
+    pub list_state: ListState,
+    pub last_selected: Option<usize>,
+    pub focus: bool,
+    pub focus_time: u64,
+    pub focus_time_list: Vec<FocusTime>,
+    pub focus_time_start: String,
+    pub focus_time_end: String,
+    pub focus_time_total: u64,
 }
 
 impl Widget for &App {
@@ -89,6 +97,14 @@ impl App {
             scrollbar_state: ScrollbarState::default(),
             horizontal_scroll: 0,
             selected_tab: SelectedTab::Tab1,
+            list_state: ListState::default(),
+            last_selected: None,
+            focus: false,
+            focus_time: 0,
+            focus_time_list: Vec::new(),
+            focus_time_start: String::new(),
+            focus_time_end: String::new(),
+            focus_time_total: 0,
         }
     }
 
@@ -163,6 +179,55 @@ impl App {
         //self.total_time_in_meetings += self.time_in_meetings;
         self.meeting_list.push(meeting);
         self.time_in_meetings = 0;
+    }
+
+    pub fn previous_list_item(&mut self) {
+        let i = match self.list_state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.get_data_len()  - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => self.last_selected.unwrap_or(0),
+        };
+        self.list_state.select(Some(i));
+    }
+
+    pub fn next_list_item(&mut self) {
+        let i = match self.list_state.selected() {
+            Some(i) => {
+                if i >= self.get_data_len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => self.last_selected.unwrap_or(0),
+        };
+        self.list_state.select(Some(i));
+    }
+
+    pub fn start_focus_time(&mut self) {
+        self.focus = true;
+    }
+
+    pub fn get_data_len(&self) -> usize {
+        match read_json() {
+            Ok(json_response) => {
+                json_response.len()
+            }
+            Err(_) => {
+                0
+            }
+        }
+    }
+
+    pub fn chache_focus_time(&mut self) {
+        let mut focus_cache_file = std::fs::File::create(".tmp_cache/focus_cache.bin").unwrap();
+        let export_focus: String = self.focus.to_string() + &','.to_string() + &self.focus_time.to_string();
+        focus_cache_file.write_all(export_focus.as_bytes()).unwrap();
     }
 
     pub fn export_json(&self) -> Result<()> {

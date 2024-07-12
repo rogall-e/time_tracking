@@ -4,6 +4,8 @@ use time_tracking_basic::app::{App, CurrentScreen, CurrentlyEditing};
 use time_tracking_basic::tui::{Event, Tui};
 use time_tracking_basic::ui::ui;
 use time_tracking_basic::calc_time::parse_time;
+use time_tracking_basic::tabs::SelectedTab;
+use std::io::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -11,6 +13,18 @@ async fn main() -> Result<()> {
     if !std::path::Path::new("data").exists() {
         std::fs::create_dir_all("data")?;
     }
+    if !std::path::Path::new(".tmp_cache").exists() {
+        std::fs::create_dir_all(".tmp_cache")?;
+        std::fs::File::create(".tmp_cache/focus_cache.bin")?;
+        let mut focus_cache_file = std::fs::File::create(".tmp_cache/focus_cache.bin").unwrap();
+        let export_focus: String = "false".to_string() + &','.to_string() + "0";
+        focus_cache_file.write_all(export_focus.as_bytes()).unwrap();
+    } else {
+        let mut focus_cache_file = std::fs::File::create(".tmp_cache/focus_cache.bin").unwrap();
+        let export_focus: String = "false".to_string() + &','.to_string() + "0";
+        focus_cache_file.write_all(export_focus.as_bytes()).unwrap();
+    }
+
     // create app and run it
     let res = run_app().await;
     res?;
@@ -23,6 +37,7 @@ async fn run_app() -> Result<()> {
 
     let mut app = App::new();
     let mut counter = 0;
+    let mut counter_focus = 0;
     loop {
         let event = tui.next().await?;
         if let Event::Render = event.clone() {
@@ -35,6 +50,14 @@ async fn run_app() -> Result<()> {
                 if counter == 60 {
                     app.time_in_meetings += 1;
                     counter = 0;
+                }
+            }
+            if app.focus {
+                counter_focus += 1;
+                if counter_focus == 60 {
+                    app.focus_time += 1;
+                    app.chache_focus_time();
+                    counter_focus = 0;
                 }
             }
             let current_time = chrono::Local::now().format("%H:%M").to_string();
@@ -112,7 +135,74 @@ async fn run_app() -> Result<()> {
                         app.horizontal_scroll = app.horizontal_scroll.saturating_sub(1);
                         app.scrollbar_state = app.scrollbar_state.position(app.horizontal_scroll);
                     }
+                    
+                   KeyCode::Down => {
+                        match app.selected_tab {
+                            SelectedTab::Tab1 => {
+                                app.next_list_item();
+                            }
+                            SelectedTab::Tab2 => {
+                               app.next_list_item();
+                            }
+                            SelectedTab::Tab3 => {
+                                continue;
+                            }
+                            SelectedTab::Tab4 => {
+                                continue;
+                            }
+                            SelectedTab::Tab5 => {
+                                continue;
+                            }
+                        }
+                    }
 
+                    KeyCode::Up => {
+                        match app.selected_tab {
+                            SelectedTab::Tab1 => {
+                                continue;
+                            }
+                            SelectedTab::Tab2 => {
+                               app.previous_list_item();
+                            }
+                            SelectedTab::Tab3 => {
+                                continue;
+                            }
+                            SelectedTab::Tab4 => {
+                                continue;
+                            }
+                            SelectedTab::Tab5 => {
+                                continue;
+                            }
+                        }
+                    }
+
+                    KeyCode::Char('F') => {
+                        match app.selected_tab {
+                            SelectedTab::Tab1 => {
+                                continue;
+                            }
+                            SelectedTab::Tab2 => {
+                                continue;
+                            }
+                            SelectedTab::Tab3 => {
+                                continue;
+                            }
+                            SelectedTab::Tab4 => {
+                                if !app.focus {
+                                    app.focus = true;
+                                    app.chache_focus_time();
+                                } else {
+                                    app.focus = false;
+                                    app.focus_time_total += app.focus_time;
+                                    app.focus_time = 0;
+                                    app.chache_focus_time();
+                                }
+                            }
+                            SelectedTab::Tab5 => {
+                                continue;
+                            }
+                        }
+                    }
                     _ => {}
                 },
 

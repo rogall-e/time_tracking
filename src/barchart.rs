@@ -200,8 +200,7 @@ pub fn draw_legend(block: Block<'static>) -> Paragraph<'static> {
             Style::default().fg(Color::Red),
         )),
     ];
-
-    //let block = Block::bordered().style(Style::default().fg(Color::White));
+    
     let paragraph = Paragraph::new(text).block(block);
     paragraph
 }

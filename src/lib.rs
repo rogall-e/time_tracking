@@ -6,3 +6,4 @@ pub mod tui;
 pub mod ui;
 pub mod barchart;
 pub mod tabs;
+pub mod list;
