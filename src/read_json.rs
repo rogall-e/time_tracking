@@ -3,7 +3,7 @@ use serde_jsonlines::JsonLinesReader;
 use std::fs::File;
 use std::io::{BufReader, Result};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MeetingList {
     pub meeting_name: String,
     pub meeting_start_time: String,

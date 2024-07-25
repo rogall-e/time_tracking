@@ -3,14 +3,16 @@ use anyhow::Result;
 use chrono::Local;
 use std::collections::HashMap;
 use std::io::prelude::*;
-use crate::tabs::SelectedTab;
 use ratatui::{
     buffer::Buffer,
     widgets::{ScrollbarState, Tabs, Widget, ListState},
     layout::{Constraint, Layout, Rect},
-    style::Color,
+    style::{
+        palette::tailwind, Color,
+    },
 };
-use strum:: IntoEnumIterator;
+use crate::tabs::{BarChartTab, EditHistoryTab, FocusTimeTab, MeetingNotesTab};
+use strum::{Display, EnumIter, FromRepr, IntoEnumIterator};
 
 pub enum CurrentScreen {
     Main,
@@ -24,6 +26,45 @@ pub enum CurrentlyEditing {
     Starttime,
     Endtime,
     MeetingName,
+}
+
+#[derive(Debug, Clone, Copy, Default, Display, EnumIter, FromRepr, PartialEq, Eq)]
+pub enum Tab {
+    #[default]
+    BarChartTab,
+    EditHistoryTab,
+    FocusTimeTab,
+    MeetingNotesTab,
+}
+
+impl Tab {
+    fn next(self) -> Self {
+        let current_index = self as usize;
+        let next_index = current_index.saturating_add(1);
+        Self::from_repr(next_index).unwrap_or(self)
+    }
+
+    fn prev(self) -> Self {
+        let current_index = self as usize;
+        let prev_index = current_index.saturating_sub(1);
+        Self::from_repr(prev_index).unwrap_or(self)
+    }
+
+    fn title(self) -> String {
+        match self {
+            Self::BarChartTab => String::new(),
+            tab => format!(" {tab} "),
+        }
+    }
+
+    pub const fn palette(self) -> tailwind::Palette {
+        match self {
+            Self::BarChartTab => tailwind::INDIGO,
+            Self::EditHistoryTab => tailwind::EMERALD,
+            Self::FocusTimeTab => tailwind::BLUE,
+            Self::MeetingNotesTab => tailwind::GREEN,
+        }
+    }  
 }
 
 pub struct App {
@@ -49,7 +90,6 @@ pub struct App {
     pub total_time_in_meetings: i32,
     pub scrollbar_state: ScrollbarState,
     pub horizontal_scroll: usize,
-    pub selected_tab: SelectedTab,
     pub list_state: ListState,
     pub last_selected: Option<usize>,
     pub focus: bool,
@@ -58,6 +98,11 @@ pub struct App {
     pub focus_time_start: String,
     pub focus_time_end: String,
     pub focus_time_total: u64,
+    pub tab: Tab,
+    pub focus_time_tab: FocusTimeTab,
+    pub meeting_notes_tab: MeetingNotesTab,
+    pub edit_history_tab: EditHistoryTab,
+    pub barchart_tab: BarChartTab,
 }
 
 impl Widget for &App {
@@ -67,7 +112,8 @@ impl Widget for &App {
         let [header_area, inner_area] = vertical.areas(area);
 
         self.render_tabs(header_area, buf);
-        self.selected_tab.render(inner_area, buf);
+        self.render_selected_tab(inner_area, buf);
+        
     }
 }
 
@@ -96,7 +142,6 @@ impl App {
             total_time_in_meetings: 0,
             scrollbar_state: ScrollbarState::default(),
             horizontal_scroll: 0,
-            selected_tab: SelectedTab::Tab1,
             list_state: ListState::default(),
             last_selected: None,
             focus: false,
@@ -105,27 +150,41 @@ impl App {
             focus_time_start: String::new(),
             focus_time_end: String::new(),
             focus_time_total: 0,
+            tab: Tab::BarChartTab,
+            focus_time_tab: FocusTimeTab::new(),
+            meeting_notes_tab: MeetingNotesTab::new(),
+            edit_history_tab: EditHistoryTab::new(),
+            barchart_tab: BarChartTab::new(),
         }
     }
 
     pub fn next_tab(&mut self) {
-        self.selected_tab = self.selected_tab.next();
+        self.tab = self.tab.next();
     }
 
     pub fn previous_tab(&mut self) {
-        self.selected_tab = self.selected_tab.previous();
+        self.tab = self.tab.prev();
     }
 
     fn render_tabs(&self, area: Rect, buf: &mut Buffer) {
-        let titles = SelectedTab::iter().map(SelectedTab::title);
-        let highlight_style = (Color::default(), self.selected_tab.palette().c700);
-        let selected_tab_index = self.selected_tab as usize;
+        let titles = Tab::iter().map(Tab::title);
+        let highlight_style = (Color::default(), self.tab.palette().c700);
+        let selected_tab_index = self.tab as usize;
         Tabs::new(titles)
             .highlight_style(highlight_style)
             .select(selected_tab_index)
             .padding("", "")
             .divider(" ")
             .render(area, buf);
+    }
+
+    fn render_selected_tab(&self, area: Rect, buf: &mut Buffer) {
+        match self.tab {
+            Tab::BarChartTab => self.barchart_tab.clone().render(area, buf),
+            Tab::EditHistoryTab => self.edit_history_tab.render(area, buf),
+            Tab::FocusTimeTab => self.focus_time_tab.render(area, buf),
+            Tab::MeetingNotesTab => self.meeting_notes_tab.clone().render(area, buf),
+        };
     }
 
     pub fn save_starttime_value(&mut self) {
@@ -159,7 +218,7 @@ impl App {
         self.meeting_name_input = String::new();
         self.meeting_start_time = Local::now().format("%H:%M").to_string();
         self.currently_editing = None;
-        self.selected_tab = SelectedTab::Tab5;
+        self.tab = Tab::MeetingNotesTab;
         //self.time_in_meetings = meeting_timer(self.meeting_running);
     }
 

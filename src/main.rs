@@ -1,10 +1,9 @@
 use crossterm::event::{self, KeyCode, KeyEventKind};
 use std::io::Result;
-use time_tracking_basic::app::{App, CurrentScreen, CurrentlyEditing};
+use time_tracking_basic::app::{App, CurrentScreen, CurrentlyEditing, Tab};
 use time_tracking_basic::tui::{Event, Tui};
 use time_tracking_basic::ui::ui;
 use time_tracking_basic::calc_time::parse_time;
-use time_tracking_basic::tabs::SelectedTab;
 use std::io::prelude::*;
 
 #[tokio::main]
@@ -19,10 +18,16 @@ async fn main() -> Result<()> {
         let mut focus_cache_file = std::fs::File::create(".tmp_cache/focus_cache.bin").unwrap();
         let export_focus: String = "false".to_string() + &','.to_string() + "0";
         focus_cache_file.write_all(export_focus.as_bytes()).unwrap();
+        let mut list_cache_file = std::fs::File::create(".tmp_cache/list_cache.bin").unwrap();
+        let export: String = "0".to_string();
+        list_cache_file.write_all(export.as_bytes()).unwrap();
     } else {
         let mut focus_cache_file = std::fs::File::create(".tmp_cache/focus_cache.bin").unwrap();
         let export_focus: String = "false".to_string() + &','.to_string() + "0";
         focus_cache_file.write_all(export_focus.as_bytes()).unwrap();
+        let mut list_cache_file = std::fs::File::create(".tmp_cache/list_cache.bin").unwrap();
+        let export: String = "0".to_string();
+        list_cache_file.write_all(export.as_bytes()).unwrap();
     }
 
     // create app and run it
@@ -137,57 +142,48 @@ async fn run_app() -> Result<()> {
                     }
                     
                    KeyCode::Down => {
-                        match app.selected_tab {
-                            SelectedTab::Tab1 => {
-                                app.next_list_item();
+                        match app.tab {
+                            Tab::BarChartTab => {
+                                continue;
                             }
-                            SelectedTab::Tab2 => {
+                            Tab::EditHistoryTab => {
                                app.next_list_item();
                             }
-                            SelectedTab::Tab3 => {
+                            Tab::FocusTimeTab => {
                                 continue;
                             }
-                            SelectedTab::Tab4 => {
-                                continue;
-                            }
-                            SelectedTab::Tab5 => {
+                            Tab::MeetingNotesTab => {
                                 continue;
                             }
                         }
                     }
 
                     KeyCode::Up => {
-                        match app.selected_tab {
-                            SelectedTab::Tab1 => {
+                        match app.tab {
+                            Tab::BarChartTab => {
                                 continue;
                             }
-                            SelectedTab::Tab2 => {
+                            Tab::EditHistoryTab => {
                                app.previous_list_item();
                             }
-                            SelectedTab::Tab3 => {
+                            Tab::FocusTimeTab => {
                                 continue;
                             }
-                            SelectedTab::Tab4 => {
-                                continue;
-                            }
-                            SelectedTab::Tab5 => {
+                            Tab::MeetingNotesTab => {
                                 continue;
                             }
                         }
                     }
 
                     KeyCode::Char('F') => {
-                        match app.selected_tab {
-                            SelectedTab::Tab1 => {
+                        match app.tab {
+                            Tab::BarChartTab => {
                                 continue;
                             }
-                            SelectedTab::Tab2 => {
+                            Tab::EditHistoryTab => {
                                 continue;
                             }
-                            SelectedTab::Tab3 => {
-                                continue;
-                            }
-                            SelectedTab::Tab4 => {
+                            Tab::FocusTimeTab => {
                                 if !app.focus {
                                     app.start_focus_time();
                                     app.chache_focus_time();
@@ -197,7 +193,7 @@ async fn run_app() -> Result<()> {
                                     app.chache_focus_time();
                                 }
                             }
-                            SelectedTab::Tab5 => {
+                            Tab::MeetingNotesTab => {
                                 continue;
                             }
                         }
